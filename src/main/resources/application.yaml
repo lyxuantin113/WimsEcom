@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wims-backend
+
+  # Cấu hình Database cho PostgreSQL
+  datasource:
+    # Lưu ý: jdbc:postgresql thay vì jdbc:mysql
+    url: jdbc:postgresql://localhost:5432/wims_db
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  # Cấu hình JPA
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        # Dialect giúp Hibernate nói tiếng Postgres chuẩn nhất
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Dòng này giúp Postgres format code SQL đẹp hơn trong log
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB      # Giới hạn cho từng file riêng lẻ
+      max-request-size: 50MB   # Giới hạn cho tổng cả request (gồm file + data)
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: lyxuantin113@gmail.com # 🔴 Thay email của bạn
+    password: kzhozerfsagcpyon    # 🔴 Thay App Password (không phải pass đăng nhập)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000

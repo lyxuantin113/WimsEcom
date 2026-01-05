@@ -1,0 +1,431 @@
+### Test Case 1: Lấy danh sách sản phẩm (Lúc đầu sẽ rỗng)
+GET http://localhost:8080/api/products
+Accept: application/json
+
+### Test Case Lấy danh sách danh mục (Lúc đầu sẽ rỗng)
+GET http://localhost:8080/api/categories
+Accept: application/json
+
+###
+
+### Test Case 2: Tạo sản phẩm mới (Happy Case)
+POST http://localhost:8080/api/products
+Content-Type: multipart/form-data
+
+{
+  "code": "SP101",
+  "name": "Iphone XS Max",
+  "description": "Sản phẩm cũ, pin 88%",
+  "price": 7000000,
+  "stockQuantity": 2
+}
+
+###
+
+### Test Case 3: Thử tạo lại sản phẩm trùng mã (Error Case)
+# Cái này để bạn test xem Backend có bắt lỗi đúng không
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "SP001",
+  "name": "Laptop Dell Khác",
+  "description": "Thử trùng mã",
+  "price": 20000000,
+  "stockQuantity": 5
+}
+
+### Test Case 4: Test Validation (Giá âm + Tên trống) -> Mong đợi lỗi 1002
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "SP999",
+  "name": "",
+  "price": -50000,
+  "stockQuantity": 10
+}
+
+### Test Case 5: Update sản phẩm ID = 1
+PUT http://localhost:8080/api/products/1
+Content-Type: application/json
+
+{
+  "code": "SP1",
+  "name": "Laptop Dell XPS 15 (Updated VIP)",
+  "description": "Đã nâng cấp RAM",
+  "price": 99000000,
+  "stockQuantity": 8
+}
+
+### Test Case 6: Delete sản phẩm ID = 1
+DELETE http://localhost:8080/api/products/6
+
+### Test Case 7.1: Tạo danh mục Laptop
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Laptop - Máy tính xách tay"
+}
+
+### Test Case 7.2: Tạo danh mục Điện thoại
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Smartphone - Điện thoại"
+}
+
+### Test Case 8: Tạo sản phẩm gắn với danh mục Laptop (categoryId = 1)
+# (Lưu ý: Sau khi chạy Test 7.1 xong, hãy nhìn kết quả xem ID của Laptop là mấy, thường là 1)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "MAC_M3_PRO",
+  "name": "MacBook Pro M3 14 inch",
+  "description": "Chip M3 Pro mạnh mẽ",
+  "price": 49990000,
+  "stockQuantity": 5,
+  "categoryId": 2
+}
+
+### 23-01-2025
+### ==========================================
+### PHẦN 1: SETUP DATA (CHẠY LẦN LƯỢT TỪ TRÊN XUỐNG)
+### ==========================================
+### 1. Tạo Category: Điện tử (Sẽ có ID = 1 nếu DB trống)
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Điện tử"
+}
+
+### 2. Tạo Category: Gia dụng (Sẽ có ID = 2)
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Gia dụng"
+}
+
+### 3. Tạo Category: Thời trang (Sẽ có ID = 3)
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Thời trang"
+}
+
+### ==========================================
+### PHẦN 2: TẠO SẢN PHẨM (MOCK DATA)
+### ==========================================
+
+### 4. Tạo MacBook (Theo yêu cầu của bạn)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "MAC_M3_PRO",
+  "name": "MacBook Pro M3 14 inch",
+  "description": "Chip M3 Pro mạnh mẽ",
+  "price": 49990000,
+  "stockQuantity": 5,
+  "categoryId": 1
+}
+
+### 5. Tạo Samsung S23 (Để test search keyword "Samsung")
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "SAM_S23",
+  "name": "Samsung Galaxy S23",
+  "description": "Điện thoại Android cao cấp",
+  "price": 20000000,
+  "stockQuantity": 100,
+  "categoryId": 1
+}
+
+### 6. Tạo Samsung TV (Để test search keyword "Samsung" + Category Điện tử)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "SAM_TV_4K",
+  "name": "Samsung TV 4K",
+  "description": "Smart TV 55 inch sắc nét",
+  "price": 12000000,
+  "stockQuantity": 50,
+  "categoryId": 1
+}
+
+### 7. Tạo Tủ lạnh Samsung (Để test search "Samsung" nhưng thuộc Gia dụng)
+# Lưu ý: categoryId = 2 (Gia dụng)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "FRIDGE_SAM",
+  "name": "Tủ lạnh Samsung Inverter",
+  "description": "Tiết kiệm điện năng",
+  "price": 8500000,
+  "stockQuantity": 20,
+  "categoryId": 2
+}
+
+### 8. Tạo iPhone 14 (Để test khoảng giá cao > 20tr)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "IP_14_PM",
+  "name": "iPhone 14 Pro Max",
+  "description": "Màu tím mộng mơ",
+  "price": 27000000,
+  "stockQuantity": 80,
+  "categoryId": 1
+}
+
+### 9. Tạo Nồi cơm điện (Để test hàng giá rẻ < 2tr)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "code": "COOKER_01",
+  "name": "Nồi cơm điện Sharp",
+  "description": "Nấu cơm ngon dẻo",
+  "price": 1200000,
+  "stockQuantity": 50,
+  "categoryId": 2
+}
+
+### Cấu hình biến môi trường (Giúp sửa url 1 chỗ ăn cả file)
+@baseUrl = http://localhost:8080/api
+
+### 1. Lấy danh sách Categories (Kiểm tra dữ liệu nền)
+GET {{baseUrl}}/categories
+Content-Type: application/json
+
+### 2. Test Pagination (Phân trang)
+# Mong đợi: Trả về trang 1, 5 phần tử đầu tiên, sắp xếp id giảm dần (default)
+GET {{baseUrl}}/products?page=1&size=2
+Content-Type: application/json
+
+### 3. Test Sort (Sắp xếp theo Giá giảm dần - Hàng xịn lên đầu)
+# Mong đợi: iPhone 14 (27tr) hoặc S23 (20tr) lên đầu
+GET {{baseUrl}}/products?page=1&size=10&sortBy=price
+Content-Type: application/json
+
+### 4. Test Search Keyword (Tìm kiếm "Samsung")
+# Mong đợi: Chỉ trả về 3 sản phẩm: S23, TV, Tủ lạnh
+GET {{baseUrl}}/products?keyword=mac
+Content-Type: application/json
+
+### 5. Test Price Range (Tìm hàng từ 10tr đến 20tr)
+# Mong đợi: TV Samsung (12tr), iPhone 11 (10tr), MacBook Air (18tr)
+GET {{baseUrl}}/products?minPrice=6000000&maxPrice=28000000
+Content-Type: application/json
+
+### 6. Test COMBO "Hủy Diệt" (Keyword + Price + Sort)
+# Tìm: Có chữ "Samsung", giá từ 10tr -> 50tr, Xếp theo giá giảm dần
+# Mong đợi: S23 (20tr) đứng trước, sau đó đến TV (12tr). Tủ lạnh (8.5tr) KHÔNG hiện ra vì < 10tr.
+GET {{baseUrl}}/products?keyword=mac&minPrice=30000000&maxPrice=48000000&sortBy=price
+Content-Type: application/json
+
+### 7. Test Tạo mới (Validation)
+# Mong đợi: Lỗi 400 vì giá âm và tên rỗng
+# Lưu ý: Vì Controller dùng @ModelAttribute (để up ảnh), nên Content-Type phải là multipart/form-data
+POST {{baseUrl}}/products
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="code"
+
+P998
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+
+Test Price LT1
+--WebAppBoundary
+Content-Disposition: form-data; name="price"
+
+50000
+--WebAppBoundary
+Content-Disposition: form-data; name="stockQuantity"
+
+10
+--WebAppBoundary
+Content-Disposition: form-data; name="categoryId"
+
+2
+--WebAppBoundary--
+
+### Test Login (Lấy Token)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Test Login (Lấy Token mới)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "user123"
+}
+
+### Test Authorization (Dùng Token để xem sản phẩm)
+# Thay chuỗi eyJ... bên dưới bằng Token bạn vừa nhận được ở trên
+GET http://localhost:8080/api/products
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjY2MDE2NywiZXhwIjoxNzY2NzQ2NTY3fQ.JToduk0mcTCQTy65BRezurdE8vEw-A9Q2LNCPtwzcNNcjMZGunj7Wly6CAaxNEZpk36h9ElUVb4IrmEvW81Zhg
+Content-Type: application/json
+
+### Test Case - Delete
+DELETE http://localhost:8080/api/products/2
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyIiwiaWF0IjoxNzY2NTQ4MTg0LCJleHAiOjE3NjY2MzQ1ODR9.8NUZV1PrBLtXc82C5aTtm_gHEZAbrx4u9rsHWeOLhqXDBV92llp4eRIi2nRpmambGfE9Pz0LB-Mbty_9HTixGA
+Content-Type: application/json
+
+### Test Case Lấy danh sách danh mục (Lúc đầu sẽ rỗng)
+GET http://localhost:8080/api/categories
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjUzOTQyNiwiZXhwIjoxNzY2NjI1ODI2fQ._VIi0_O1EqrSvyYiDiFr3t_zXokDXzbu8NCe_CUcyuyUg1qLrC4jZfVTH7pw5Z5ZT9jLIIxbfZVW1baEtP_2kA
+Accept: application/json
+
+### Test Case - Lấy các Order của Tôi
+GET http://localhost:8080/api/orders/my-orders
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjY1OTQwOSwiZXhwIjoxNzY2NzQ1ODA5fQ.2bPeLIuH74EIJx9TmjG-oXeWhaSfyhzxQjVj92k6tk_h3LVnVswM4IS7CS2eYWBoXWkXrv-VMGQwS0mgHOMclg
+Accept: application/json
+
+### Test Case - Lấy các Order của Tôi
+GET http://localhost:8080/api/orders/my-orders
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyIiwiaWF0IjoxNzY2NjU5NDM1LCJleHAiOjE3NjY3NDU4MzV9.V_IrRIOuteg4Uo65fozMn1eu2kZNnwGeNr4YBHhuT4pWk2-5jCgA0V1KT3TU6D6TFj5vZtS0krfytRh7qgJ20w
+Accept: application/json
+
+### Test Case - Admin lấy các Orders
+GET http://localhost:8080/api/orders
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjY1OTQwOSwiZXhwIjoxNzY2NzQ1ODA5fQ.2bPeLIuH74EIJx9TmjG-oXeWhaSfyhzxQjVj92k6tk_h3LVnVswM4IS7CS2eYWBoXWkXrv-VMGQwS0mgHOMclg
+Accept: application/json
+
+### Test Case - User xem Order của họ
+#GET http://localhost:8080/api/orders
+#Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyIiwiaWF0IjoxNzY2NjU5NDM1LCJleHAiOjE3NjY3NDU4MzV9.V_IrRIOuteg4Uo65fozMn1eu2kZNnwGeNr4YBHhuT4pWk2-5jCgA0V1KT3TU6D6TFj5vZtS0krfytRh7qgJ20w
+#Accept: application/json
+
+### Test Case - Admin lấy các Orders
+PUT http://localhost:8080/api/orders/3/status?status=CANCELLED
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjY2MDE2NywiZXhwIjoxNzY2NzQ2NTY3fQ.JToduk0mcTCQTy65BRezurdE8vEw-A9Q2LNCPtwzcNNcjMZGunj7Wly6CAaxNEZpk36h9ElUVb4IrmEvW81Zhg
+Accept: application/json
+
+### Test Case - Admin chi tiết của họ
+GET http://localhost:8080/api/orders/3
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NjY2MDE2NywiZXhwIjoxNzY2NzQ2NTY3fQ.JToduk0mcTCQTy65BRezurdE8vEw-A9Q2LNCPtwzcNNcjMZGunj7Wly6CAaxNEZpk36h9ElUVb4IrmEvW81Zhg
+Accept: application/json
+
+### Test Case - User lấy chi tiết của họ
+GET http://localhost:8080/api/orders/3
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyIiwiaWF0IjoxNzY2NjU5NDM1LCJleHAiOjE3NjY3NDU4MzV9.V_IrRIOuteg4Uo65fozMn1eu2kZNnwGeNr4YBHhuT4pWk2-5jCgA0V1KT3TU6D6TFj5vZtS0krfytRh7qgJ20w
+Accept: application/json
+
+
+### TEST CART / CART ITEM
+### BƯỚC 0: Login để lấy Token (Thay username/password của bạn vào)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+> {%
+    // Script này tự động lấy token từ response lưu vào biến authToken
+    // Bạn không cần copy paste thủ công nữa
+    client.global.set("authToken", response.body.result.token);
+%}
+
+### ------------------------------------------------------------
+
+### TEST CASE 1: Xem giỏ hàng (Lúc đầu có thể rỗng)
+# Mục đích: Kiểm tra xem hàm getOrCreateCart có hoạt động không
+GET http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+
+### ------------------------------------------------------------
+
+### TEST CASE 2: Thêm sản phẩm số 1 (Lần đầu)
+# Mục đích: Kiểm tra logic tạo mới CartItem
+POST http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 42,
+  "quantity": 2
+}
+
+### ------------------------------------------------------------
+
+### TEST CASE 3: Thêm TIẾP sản phẩm số 1 (Logic Cộng Dồn)
+# Mục đích: Test logic quan trọng nhất.
+# Kỳ vọng: Không tạo dòng mới, mà số lượng sp 1 tăng từ 2 -> 5
+POST http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 42,
+  "quantity": 1
+}
+
+### ------------------------------------------------------------
+
+### TEST CASE 4: Thêm sản phẩm số 2 (Món khác)
+# Mục đích: Kiểm tra giỏ hàng chứa được nhiều loại món khác nhau
+POST http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 39,
+  "quantity": 1
+}
+
+### ------------------------------------------------------------
+
+### TEST CASE 5: Kiểm tra kết quả cuối cùng
+# Kỳ vọng:
+# - Tổng items: 2 dòng (Product 1 và Product 2)
+# - Product 1: quantity = 5
+# - Product 2: quantity = 1
+GET http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+
+### ------------------------------------------------------------
+
+### TEST CASE 6: Validate dữ liệu sai (Số lượng âm)
+# Kỳ vọng: Lỗi 400 Bad Request
+POST http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 39,
+  "quantity": 1
+}
+
+### TEST CASE 7: Validate dữ liệu sai (Sản phẩm không tồn tại)
+# Kỳ vọng: Lỗi 1004 App Exception (Product not found)
+POST http://localhost:8080/api/cart
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 9999,
+  "quantity": 1
+}
