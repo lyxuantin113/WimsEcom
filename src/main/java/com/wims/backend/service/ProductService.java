@@ -12,6 +12,7 @@ import com.wims.backend.repository.ProductRepository;
 import com.wims.backend.repository.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class ProductService {
     private final TransactionTemplate transactionTemplate;
 
     // Hàm lấy tất cả sản phẩm
+    @Cacheable(value = "products")
     public PageResponse<ProductResponse> getAllProducts(
             int page, int size, String sortBy,
             String keyword, BigDecimal minPrice, BigDecimal maxPrice, boolean isOutOfStock, Long categoryId

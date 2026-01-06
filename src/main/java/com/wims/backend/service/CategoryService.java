@@ -8,23 +8,25 @@ import com.wims.backend.entity.Product;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.CategoryMapper;
 import com.wims.backend.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
-    @Autowired
-    private CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryMapper categoryMapper;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
+    @Transactional
     public CategoryResponse createCategory(CategoryRequestDTO request) {
         Category category = categoryMapper.toCategory(request);
         category = categoryRepository.save(category);
@@ -56,6 +58,7 @@ public class CategoryService {
         return categoryMapper.toCategoryResponse(category);
     }
 
+    @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequestDTO request) {
         // 1. Tìm xem danh mục có tồn tại không
         Category category = categoryRepository.findById(id)

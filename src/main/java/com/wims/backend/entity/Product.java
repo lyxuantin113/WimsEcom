@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Table(name = "products") // 2. Tên bảng trong DB sẽ là "products"
 @Data // 3. Lombok tự sinh Getter, Setter, toString, hashCode... (Khỏi phải viết tay)
 // 1. Khi gọi hàm delete(), thay vì DELETE thật, hãy chạy câu lệnh UPDATE này
-@SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ? AND version = ?")
 // 2. Khi gọi hàm select (findAll, findById...), tự động thêm điều kiện này vào
 @Where(clause = "is_deleted = false")
 public class Product extends BaseEntity {

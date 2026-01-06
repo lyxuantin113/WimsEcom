@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,11 +59,23 @@ public class DiscountService {
                     .forEach(allowedIds::add);
         }
 
+        List<Long> productIds = request.getItems().stream()
+                .map(CartItemRequest::getProductId)
+                .toList();
+
+        List<Product> productList = productRepository.findAllById(productIds);
+
+        Map<Long, Product> productMap = productList.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
         // 3. Duyệt qua từng món hàng trong giỏ
         for (CartItemRequest itemReq : request.getItems()) {
             // 🔥 Query DB để lấy giá chuẩn và Category
-            Product product = productRepository.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new AppException(1004, "Sản phẩm không tồn tại: " + itemReq.getProductId()));
+            Product product = productMap.get(itemReq.getProductId());
+
+            if (product == null) {
+                throw new AppException(1004, "Sản phẩm không tồn tại: " + itemReq.getProductId());
+            }
 
             BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));
             totalOrderValue = totalOrderValue.add(lineTotal);
@@ -100,14 +113,14 @@ public class DiscountService {
         }
 
         // 5. Tính toán tiền giảm
-        return calculateAmountByType(discount, eligibleAmount, actualAffectedIds);
+        return calculateAmountByType(discount, totalOrderValue, eligibleAmount, actualAffectedIds);
     }
 
     // Hàm phụ: Tính toán số tiền giảm dựa trên Type (FIXED hay PERCENTAGE)
-    private DiscountCalculationResponse calculateAmountByType(Discount discount, BigDecimal baseAmount, List<Long> actualAffectedIds) {
+    private DiscountCalculationResponse calculateAmountByType(Discount discount, BigDecimal totalOrderValue, BigDecimal baseAmount, List<Long> actualAffectedIds) {
         BigDecimal result;
         if (discount.getType() == DiscountType.FIXED_AMOUNT) {
-            result = discount.getValue();
+            result = totalOrderValue.compareTo(discount.getValue()) < 0 ? totalOrderValue : discount.getValue();
         } else {
             // Tính %: baseAmount * value / 100
             result = baseAmount.multiply(discount.getValue()).divide(BigDecimal.valueOf(100));

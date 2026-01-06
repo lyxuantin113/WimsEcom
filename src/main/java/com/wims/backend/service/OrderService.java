@@ -8,6 +8,8 @@ import com.wims.backend.dto.response.OrderResponse;
 import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.entity.*;
 import com.wims.backend.enums.OrderStatus;
+import com.wims.backend.event.OrderCreatedEvent;
+import com.wims.backend.event.OrderStatusChangedEvent;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
@@ -17,17 +19,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -205,28 +204,20 @@ public class OrderService {
             cartRepository.save(cart);
         }
 
-        // 9. Gửi thông báo (Dùng savedOrder.getId() là an toàn nhất)
-        String notiMsg = "Đơn hàng #" + savedOrder.getId() + " đã được tạo thành công!";
-
-        notificationService.sendWebSocketNotification(user.getUsername(), notiMsg, savedOrder.getId());
-
-        String emailSubject = "Xác nhận đơn hàng #" + savedOrder.getId();
-        String emailBody = "Chào " + request.getCustomerName() + ",\n\n" + notiMsg;
-        notificationService.sendEmail(user.getEmail(), emailSubject, emailBody);
-
-        // 8. Fix lỗi Email trong Transaction: BẮN EVENT
+        // 9. Fix lỗi Email trong Transaction: BẮN EVENT
         // Transaction chưa commit tại đây, nhưng Event Listener sẽ xử lý sau
         eventPublisher.publishEvent(new OrderCreatedEvent(this, savedOrder, user));
 
         return orderMapper.toOrderResponse(savedOrder);
     }
 
-    @Transactional // Quan trọng: Để đảm bảo cộng kho và lưu đơn thành công cùng lúc
+    @Transactional
     public OrderResponse updateOrderStatus(Long orderId, String statusString) {
         // 1. Tìm đơn hàng
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));
 
+        OrderStatus oldStatus = order.getStatus();
         // 2. Validate trạng thái gửi lên (Tránh gửi linh tinh "ABCXYZ")
         OrderStatus newStatus;
         try {
@@ -236,46 +227,18 @@ public class OrderService {
         }
 
         // 3. Logic HOÀN KHO (Chỉ chạy khi đơn bị HỦY)
-        // Hoàn kho khi: (Mới là CANCELLED và cũ chưa CANCEL) HOẶC (Mới là RETURNED và cũ chưa RETURNED)
-        if ((newStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) ||
-                (newStatus == OrderStatus.RETURNED && order.getStatus() != OrderStatus.RETURNED)) {
-
-            for (OrderDetail detail : order.getOrderDetails()) {
-                Product product = detail.getProduct();
-                product.setStockQuantity(product.getStockQuantity() + detail.getQuantity());
-                productRepository.save(product);
-            }
-        }
+        restock(order, newStatus);
 
         // 4. Cập nhật trạng thái mới
         order.setStatus(newStatus);
-
-        // Notifications
-        String newStatusVN = getStatusInVietnamese(newStatus);
-        String notiMsg = "Đơn hàng #" + orderId + " của bạn đã chuyển sang trạng thái: " + newStatusVN;
-
-        // a. Luôn bắn Socket để hiện chuông (Real-time)
-        notificationService.sendWebSocketNotification(order.getUser().getUsername(), notiMsg, orderId);
-
-        // b. Chỉ gửi Email khi trạng thái quan trọng (PAID, SHIPPING, CANCELLED)
-        if (newStatus != OrderStatus.PENDING_CONFIRMATION
-                && newStatus != OrderStatus.PENDING_PAYMENT) {
-
-            String emailSubject = "Cập nhật đơn hàng #" + orderId;
-            String emailBody = "Xin chào " + order.getCustomerName() + ",\n\n"
-                    + notiMsg + "\n"
-                    + "Vui lòng truy cập website để xem chi tiết.\n\n"
-                    + "Trân trọng,\nWIMS Team.";
-
-            // Gửi mail (Chạy bất đồng bộ hoặc trong try-catch bên trong service rồi nên ko lo chậm)
-            notificationService.sendEmail(order.getUser().getEmail(), emailSubject, emailBody);
-        }
+        Order savedOrder = orderRepository.save(order);
+        eventPublisher.publishEvent(new OrderStatusChangedEvent(this, savedOrder, oldStatus, newStatus));
 
         // 5. Lưu và trả về
-        return orderMapper.toOrderResponse(orderRepository.save(order));
+        return orderMapper.toOrderResponse(savedOrder);
     }
 
-    // Lấy chi tiết đơn hàng (Có bảo mật: Chỉ Admin hoặc Chính chủ mới được xem)
+        // Lấy chi tiết đơn hàng (Có bảo mật: Chỉ Admin hoặc Chính chủ mới được xem)
     public OrderResponse getOrderById(Long orderId) {
         // 1. Tìm đơn hàng trong DB
         Order order = orderRepository.findById(orderId)
@@ -318,17 +281,13 @@ public class OrderService {
                 && order.getStatus() != OrderStatus.CONFIRMED
                 && order.getStatus() != OrderStatus.PENDING_PAYMENT) {
 
-            throw new AppException(1009, "Đơn hàng đang giao, đã hoàn thành hoặc đã hủy, không thể hủy!");
+            throw new AppException(1009, "Đơn hàng đang giao hoặc đã hoàn thành, không thể hủy!");
         }
         else if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new AppException(1009, "Đơn hàng đã bị hủy trước đó");
         }
 
-        for (OrderDetail detail : order.getOrderDetails()) {
-            Product product = detail.getProduct();
-            product.setStockQuantity(product.getStockQuantity() + detail.getQuantity());
-            productRepository.save(product);
-        }
+        restock(order, OrderStatus.CANCELLED);
 
         order.setStatus(OrderStatus.CANCELLED);
         return orderMapper.toOrderResponse(orderRepository.save(order));
@@ -355,30 +314,20 @@ public class OrderService {
         return orderMapper.toOrderResponse(orderRepository.save(order));
     }
 
-    private String getStatusInVietnamese(OrderStatus status) {
-        if (status == null) return "Trạng thái không xác định";
+    private void restock(Order order, OrderStatus newStatus) {
+        if ((newStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) ||
+                (newStatus == OrderStatus.RETURNED && order.getStatus() != OrderStatus.RETURNED)) {
 
-        switch (status) {
-            case PENDING_PAYMENT:
-                return "Chờ thanh toán";
-            case PENDING_CONFIRMATION:
-                return "Chờ xác nhận";
-            case PAID:
-                return "Đã thanh toán";
-            case CONFIRMED:
-                return "Đã xác nhận";
-            case SHIPPING:
-                return "Đang giao hàng";
-            case COMPLETED:
-                return "Giao hàng thành công";
-            case CANCELLED:
-                return "Đã hủy";
-            case RETURN_REQUESTED:
-                return "Yêu cầu trả hàng";
-            case RETURNED:
-                return "Đã trả hàng";
-            default:
-                return status.name(); // Trường hợp lạ thì trả về tiếng Anh gốc
+            List<Product> products = new ArrayList<>();
+
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Product product = detail.getProduct();
+                product.setStockQuantity(product.getStockQuantity() + detail.getQuantity());
+                products.add(product);
+            }
+
+            productRepository.saveAll(products);
+
         }
     }
 }

@@ -32,7 +32,7 @@ public class CartService {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository; // <--- CẦN CÁI NÀY để tìm Product
+    private final ProductRepository productRepository;
 
     // Hàm nội bộ để lấy hoặc tạo giỏ hàng
     private Cart getOrCreateCart(User user) {
@@ -120,8 +120,6 @@ public class CartService {
 
         return toCartResponse(cart);
     }
-
-    // Trong CartService.java
 
     @Transactional
     public CartResponse updateCartItem(Long itemId, int quantity) {

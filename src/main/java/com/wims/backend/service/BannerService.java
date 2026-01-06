@@ -9,6 +9,7 @@ import com.wims.backend.repository.BannerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,13 +55,12 @@ public class BannerService {
         return bannerMapper.toBannerResponse(bannerRepository.save(banner));
     }
 
+    @Transactional
     public BannerResponse updateBanner(Long id, BannerRequest request) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new AppException(1004, "Banner not found"));
 
         String oldImageUrl = banner.getImageUrl();
-
-        bannerMapper.updateBanner(banner, request);
 
         if (request.getFile() != null && !request.getFile().isEmpty()) {
             try {

@@ -1,5 +1,7 @@
-package com.wims.backend.entity;
+package com.wims.backend.event;
 
+import com.wims.backend.entity.Order;
+import com.wims.backend.entity.User;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 

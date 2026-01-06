@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/static/**",
                                 "uploads/**"
                         ).permitAll()
+                        .requestMatchers("/api/banners/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
 
