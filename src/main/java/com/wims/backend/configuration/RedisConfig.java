@@ -2,29 +2,58 @@ package com.wims.backend.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class RedisConfig {
 
+    // 1. Cấu hình RedisTemplate (Để thao tác thủ công sau này nếu cần)
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // 1. Key là String (Ví dụ: "product:1")
+        // Key là String
         template.setKeySerializer(new StringRedisSerializer());
-
-        // 2. Value là JSON (User đọc được, FE đọc được)
+        // Value là JSON (Dùng thư viện Jackson có sẵn trong Spring Web)
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
-        // Cấu hình cho Hash Key/Value (nếu dùng Redis Hash)
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return template;
+    }
+
+    // 2. Cấu hình RedisCacheManager (Để @Cacheable hoạt động với JSON)
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // 1. Cấu hình mặc định cho tất cả các cache (Ví dụ: 1 giờ)
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+
+        // 2. Cấu hình riêng cho từng loại (Map)
+        Map<String, RedisCacheConfiguration> specificConfig = new HashMap<>();
+
+        // Cache "product_search" chỉ sống 1 phút (Để danh sách sản phẩm luôn tươi mới)
+        specificConfig.put("product_search", defaultConfig.entryTtl(Duration.ofMinutes(1)));
+
+        // Cache "product_detail" sống 1 ngày (Vì chi tiết ít khi đổi)
+        specificConfig.put("product_detail", defaultConfig.entryTtl(Duration.ofDays(1)));
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(defaultConfig) // Áp dụng default
+                .withInitialCacheConfigurations(specificConfig) // Áp dụng config riêng
+                .build();
     }
 }

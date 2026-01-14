@@ -2,7 +2,7 @@ package com.wims.backend.controller;
 
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.response.DashboardResponse;
-import com.wims.backend.service.DashboardService;
+import com.wims.backend.service.based.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

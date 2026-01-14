@@ -1,23 +1,19 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.CategoryRequestDTO;
 import com.wims.backend.dto.response.CategoryResponse;
 import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.entity.Category;
-import com.wims.backend.entity.Product;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.CategoryMapper;
 import com.wims.backend.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

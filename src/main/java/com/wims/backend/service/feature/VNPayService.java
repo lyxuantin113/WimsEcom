@@ -1,15 +1,16 @@
-package com.wims.backend.service;
+package com.wims.backend.service.feature;
 
 import com.wims.backend.configuration.VNPayConfig;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.VNPayResponse;
 import com.wims.backend.entity.Order;
+import com.wims.backend.entity.User;
 import com.wims.backend.enums.OrderStatus;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.repository.OrderRepository;
+import com.wims.backend.utils.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,12 +25,13 @@ import java.util.*;
 public class VNPayService {
 
     private final OrderRepository orderRepository;
+    private final SecurityUtils securityUtils;
 
     public String createPaymentUrl(long orderId, String ipAddress) {
 
         // 1. Lấy user hiện tại để bảo mật (chỉ chủ đơn hàng mới được tạo link thanh toán lại)
-        var context = SecurityContextHolder.getContext();
-        String username = context.getAuthentication().getName();
+        User user = securityUtils.getCurrentUserLogin();
+        String username = user.getUsername();
 
         // 2. Tìm đơn hàng
         Order order = orderRepository.findById(orderId)

@@ -1,21 +1,26 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.ProductRequestDTO;
 import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.dto.response.ProductResponse;
 import com.wims.backend.entity.Category;
 import com.wims.backend.entity.Product;
+import com.wims.backend.entity.User;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.ProductMapper;
 import com.wims.backend.repository.CategoryRepository;
 import com.wims.backend.repository.ProductRepository;
 import com.wims.backend.repository.specification.ProductSpecification;
+import com.wims.backend.security.CustomUserDetails;
+import com.wims.backend.service.feature.FileStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,11 +48,19 @@ public class ProductService {
     // Để xử lý triệt để Self-Invocation
     private final TransactionTemplate transactionTemplate;
 
+    private final CacheManager cacheManager;
+
     // Hàm lấy tất cả sản phẩm
-    @Cacheable(value = "products")
+    @Cacheable(value = "product_search")
     public PageResponse<ProductResponse> getAllProducts(
-            int page, int size, String sortBy,
-            String keyword, BigDecimal minPrice, BigDecimal maxPrice, boolean isOutOfStock, Long categoryId
+            int page,
+            int size,
+            String sortBy,
+            String keyword,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            boolean isOutOfStock,
+            Long categoryId
     ) {
         // 1. Tạo đối tượng Pageable
         // Logic: Sắp xếp theo SortBy (Mặc định) giảm dần (Sản phẩm mới nhất lên đầu)
@@ -56,10 +69,9 @@ public class ProductService {
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
         // 2. KHỞI TẠO SPECIFICATION (Đây là phần quan trọng nhất)
-        // Specification.where(null) nghĩa là "không có điều kiện gì cả" (SELECT * FROM products)
         Specification<Product> spec = Specification.where(null);
 
-        // 3. Lắp ráp từng mảnh Lego
+        // 3. Lắp ráp
         // Nếu user có gửi keyword -> Nối thêm điều kiện lọc tên
         if (keyword != null && !keyword.isEmpty()) {
             spec = spec.and(ProductSpecification.hasName(keyword));
@@ -95,6 +107,7 @@ public class ProductService {
                 .build();
     }
 
+    @Cacheable(value = "product_detail", key = "#id")
     public ProductResponse getProductById(Long id) {
         // 1. Tìm sản phẩm, nếu không thấy thì NÉM LỖI NGAY (để Controller trả về 404)
         Product product = productRepository.findById(id)
@@ -148,6 +161,10 @@ public class ProductService {
     }
 
     // Sửa sản phẩm
+    @Caching(evict = {
+            @CacheEvict(value = "product_detail", key = "#id"),
+            @CacheEvict(value = "product_search", allEntries = true)
+    })
     public ProductResponse updateProduct(Long id, ProductRequestDTO request) {
         // 1. Tìm sản phẩm
         Product product = productRepository.findById(id)
@@ -170,15 +187,11 @@ public class ProductService {
 
         String finalNewImageUrl = newImageUrl;
 
-        ProductResponse response = transactionTemplate.execute(status -> {
-            // Mọi code trong block này đều nằm trong Transaction
-            // Nếu lỗi -> Tự Rollback.
-            return updateProductToDB(finalNewImageUrl, product, request);
-        });
+        ProductResponse response = transactionTemplate.execute(status -> updateProductToDB(finalNewImageUrl, product, request));
 
         if (hasNewImageUrl && oldImageUrl != null && !oldImageUrl.isEmpty()) {
             try {
-                fileStorageService.deleteImage(product.getImage());
+                fileStorageService.deleteImage(oldImageUrl);
             } catch (IOException e) {
                 throw new AppException(9999, "Lỗi xóa ảnh cũ: " + e.getMessage());
             }
@@ -212,12 +225,11 @@ public class ProductService {
                 .orElseThrow(() -> new AppException(1003, "Không tìm thấy sản phẩm id: " + id));
 
         // 2. Xóa ảnh trong ổ cứng (NẾU CÓ) - Logic mới thêm
-        // Xóa ảnh trên Cloud để tiết kiệm dung lượng
+        // Xóa ảnh trên Cloud
         if (product.getImage() != null && !product.getImage().isEmpty()) {
             try {
                 fileStorageService.deleteImage(product.getImage());
             } catch (IOException e) {
-                // Nếu xóa ảnh trên cloud lỗi thì log ra thôi, vẫn cho xóa DB
                 System.err.println("Không xóa được ảnh trên cloud: " + e.getMessage());
             }
         }

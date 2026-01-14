@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.feature;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;

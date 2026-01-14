@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.CartItemRequest;
 import com.wims.backend.dto.request.DiscountCalculationRequest;
@@ -13,13 +13,15 @@ import com.wims.backend.event.OrderStatusChangedEvent;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
+import com.wims.backend.security.CustomUserDetails;
+import com.wims.backend.service.feature.NotificationService;
+import com.wims.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,11 +43,12 @@ public class OrderService {
 
     private final OrderMapper orderMapper;
 
-    private final NotificationService notificationService;
     private final DiscountRepository discountRepository;
     private final DiscountService discountService;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private final SecurityUtils securityUtils;
 
     public PageResponse<OrderResponse> getAllOrders(int page, int size, String sortBy) {
         Sort sort = Sort.by(sortBy).descending();
@@ -64,15 +67,20 @@ public class OrderService {
                 .build();
     }
 
-    public PageResponse<OrderResponse> getMyOrders(int page, int size, String sortBy) {
+    public PageResponse<OrderResponse> getMyOrders(
+            int page,
+            int size,
+            String sortBy
+    ) {
 
         Sort sort = Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        var context = SecurityContextHolder.getContext();
+        User user = securityUtils.getCurrentUserLogin();
 
-        String username = context.getAuthentication().getName();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(1001, "User doesn't exist"));
+        if (user == null) {
+            throw new AppException(1001, "User không tồn tại !");
+        }
 
         Page<Order> orderList = orderRepository.findByUserId(user.getId(), pageable);
 
@@ -91,10 +99,7 @@ public class OrderService {
     public OrderResponse createOrder(OrderCreationRequest request) {
 
         // 1. Lấy User
-        var context = SecurityContextHolder.getContext();
-        String username = context.getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(1001, "User không tồn tại"));
+        User user = securityUtils.getCurrentUserLogin();
 
         // 2. Xác định trạng thái ban đầu
         OrderStatus initialStatus = "VNPAY".equalsIgnoreCase(request.getPaymentMethod())
@@ -238,26 +243,18 @@ public class OrderService {
         return orderMapper.toOrderResponse(savedOrder);
     }
 
-        // Lấy chi tiết đơn hàng (Có bảo mật: Chỉ Admin hoặc Chính chủ mới được xem)
+    // Lấy chi tiết đơn hàng (Có bảo mật: Chỉ Admin hoặc Chính chủ mới được xem)
     public OrderResponse getOrderById(Long orderId) {
-        // 1. Tìm đơn hàng trong DB
+        // Tìm đơn hàng trong DB
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));
 
-        // 2. Lấy thông tin người đang đăng nhập hiện tại
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
+        // Check xem người này có quyền ADMIN không?
+        User currentUser = securityUtils.getCurrentUserLogin();
 
-        // 3. Check xem người này có quyền ADMIN không?
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority ->
-                        grantedAuthority.getAuthority().equals("ROLE_ADMIN") ||
-                                grantedAuthority.getAuthority().equals("SCOPE_ADMIN") // Đề phòng trường hợp SCOPE
-                );
-
-        // 4. LOGIC BẢO VỆ QUAN TRỌNG:
-        // Nếu KHÔNG PHẢI Admin VÀ KHÔNG PHẢI chủ nhân đơn hàng -> Chặn ngay lập tức
-        if (!isAdmin && !order.getUser().getUsername().equals(currentUsername)) {
+        // 3. LOGIC BẢO VỆ: So sánh ID thay vì Username
+        // Logic: Nếu KHÔNG PHẢI Admin VÀ ID người dùng KHÔNG TRÙNG ID chủ đơn -> Chặn
+        if (!securityUtils.isAdmin() && !currentUser.getId().equals(order.getUser().getId())) {
             throw new AppException(403, "Bạn không có quyền xem đơn hàng của người khác!");
         }
 
@@ -267,13 +264,11 @@ public class OrderService {
 
     @Transactional
     public OrderResponse cancelOrder(Long orderId) {
-        var context = SecurityContextHolder.getContext();
 
-        String username = context.getAuthentication().getName();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(1001, "Người dùng không tồn tại"));
+        User user = securityUtils.getCurrentUserLogin();
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(1001, "Đơn hàng không tồn tại"));
 
-        if (!order.getUser().getUsername().equals(username)) {
+        if (!order.getUser().getUsername().equals(user.getUsername())) {
             throw new AppException(403, "Bạn không có quyền hủy đơn hàng này");
         }
 
@@ -295,8 +290,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse requestReturn(Long orderId) {
-        var context = SecurityContextHolder.getContext();
-        String username = context.getAuthentication().getName();
+        User user = securityUtils.getCurrentUserLogin();
+        String username = user.getUsername();
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));

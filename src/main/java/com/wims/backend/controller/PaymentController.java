@@ -3,7 +3,7 @@ package com.wims.backend.controller;
 import com.wims.backend.configuration.VNPayConfig;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.VNPayResponse;
-import com.wims.backend.service.VNPayService;
+import com.wims.backend.service.feature.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

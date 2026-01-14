@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.response.DashboardResponse;
 import com.wims.backend.dto.response.MonthlyRevenue;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,12 +34,12 @@ public class DashboardService {
         List<Object[]> revenueData = orderRepository.getRevenueByMonth(currentYear);
         List<MonthlyRevenue> chartData = new ArrayList<>();
 
-        // Khởi tạo đủ 12 tháng là 0 để biểu đồ không bị đứt đoạn
+        // Khởi tạo đủ 12 tháng
         for (int i = 1; i <= 12; i++) {
             chartData.add(new MonthlyRevenue(i, BigDecimal.ZERO));
         }
 
-        // Fill dữ liệu thật vào
+        // Fill dữ liệu
         for (Object[] row : revenueData) {
             int month = (int) row[0];
             BigDecimal amount = (BigDecimal) row[1];

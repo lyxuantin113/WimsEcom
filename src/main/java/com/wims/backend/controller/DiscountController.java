@@ -5,12 +5,11 @@ import com.wims.backend.dto.request.DiscountCalculationRequest;
 import com.wims.backend.dto.request.DiscountRequest;
 import com.wims.backend.dto.response.DiscountCalculationResponse;
 import com.wims.backend.dto.response.DiscountResponse;
-import com.wims.backend.service.DiscountService;
+import com.wims.backend.service.based.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController

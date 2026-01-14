@@ -5,7 +5,7 @@ import com.wims.backend.enums.OrderStatus;
 import com.wims.backend.event.OrderCreatedEvent;
 import com.wims.backend.entity.User;
 import com.wims.backend.event.OrderStatusChangedEvent;
-import com.wims.backend.service.NotificationService;
+import com.wims.backend.service.feature.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

@@ -56,8 +56,9 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
 
-                        // 1. Cho lấy danh sách để hiển thị
+                        // 1. Cho lấy danh sách để hiển thị nhưng search chỉ lưu lịch sử của người đã login
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                        .requestMatchers("/api/products/search-history").authenticated()
 
                         // 2. Các hành động thay đổi dữ liệu (POST, PUT, DELETE) bắt buộc phải là ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasRole("ADMIN")

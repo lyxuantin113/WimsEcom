@@ -4,24 +4,31 @@ import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.request.ProductRequestDTO;
 import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.dto.response.ProductResponse;
-import com.wims.backend.entity.Product;
-import com.wims.backend.service.ProductService;
+import com.wims.backend.entity.User;
+import com.wims.backend.security.CustomUserDetails;
+import com.wims.backend.service.based.ProductService;
+import com.wims.backend.service.feature.SearchHistoryService;
+import com.wims.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
-@RestController // Đánh dấu đây là API Controller
-@RequestMapping("/api/products") // Đường dẫn gốc: http://localhost:8080/api/products
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
+    private final SearchHistoryService searchHistoryService;
+
+    private final SecurityUtils securityUtils;
 
     // API: Lấy danh sách (GET)
     @GetMapping
@@ -36,8 +43,50 @@ public class ProductController {
             @RequestParam(required = false) boolean isOutOfStock,
             @RequestParam(required = false) Long categoryId
     ) {
+        User user = securityUtils.getCurrentUserLogin();
+
+        if (keyword != null && !keyword.trim().isEmpty() && user != null) {
+            // Con phải gọi service để lưu vào Redis List
+            searchHistoryService.saveSearchHistory(user.getId(), keyword.trim());
+        }
+
+        var result = productService.getAllProducts(page, size, sortBy, keyword, minPrice, maxPrice, isOutOfStock, categoryId);
+
         return ApiResponse.<PageResponse<ProductResponse>>builder()
-                .result(productService.getAllProducts(page, size, sortBy, keyword, minPrice, maxPrice, isOutOfStock, categoryId))
+                .result(result)
+                .build();
+    }
+
+    @GetMapping("/search-history")
+    public ApiResponse<List<String>> getSearchHistory() {
+        User user = securityUtils.getCurrentUserLogin();
+
+        if (user == null) {
+            return ApiResponse.<List<String>>builder()
+                    .result(Collections.emptyList()) // Trả về mảng rỗng []
+                    .build();
+        }
+
+        Long userId = user.getId();
+
+        // Nếu đã login, mới lấy ID
+        return ApiResponse.<List<String>>builder()
+                .result(searchHistoryService.getSearchHistory(userId))
+                .build();
+    }
+
+    @DeleteMapping("/search-history")
+    public ApiResponse<Void> deleteSearchHistory(
+            @RequestParam String keyword
+    ) {
+        User user = securityUtils.getCurrentUserLogin();
+
+        if (user != null) {
+            // Gọi hàm remove trong RedisService (Con cần viết thêm hàm này nếu chưa có)
+            searchHistoryService.removeKeyword(user.getId(), keyword);
+        }
+        return ApiResponse.<Void>builder()
+                .message("Đã xóa từ khóa khỏi lịch sử")
                 .build();
     }
 

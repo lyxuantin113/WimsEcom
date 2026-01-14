@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.BannerRequest;
 import com.wims.backend.dto.response.BannerResponse;
@@ -6,8 +6,8 @@ import com.wims.backend.entity.Banner;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.BannerMapper;
 import com.wims.backend.repository.BannerRepository;
+import com.wims.backend.service.feature.FileStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

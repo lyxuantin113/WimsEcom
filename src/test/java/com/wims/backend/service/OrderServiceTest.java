@@ -7,6 +7,8 @@ import com.wims.backend.entity.User;
 import com.wims.backend.event.OrderCreatedEvent;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
+import com.wims.backend.service.based.DiscountService;
+import com.wims.backend.service.based.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

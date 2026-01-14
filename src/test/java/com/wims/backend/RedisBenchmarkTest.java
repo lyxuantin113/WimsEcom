@@ -2,7 +2,7 @@ package com.wims.backend;
 
 import com.wims.backend.entity.Product;
 import com.wims.backend.repository.ProductRepository;
-import com.wims.backend.service.ProductService;
+import com.wims.backend.service.based.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

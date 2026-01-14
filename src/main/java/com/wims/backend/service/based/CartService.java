@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.CartItemRequest;
 import com.wims.backend.dto.response.CartItemResponse;
@@ -8,14 +8,12 @@ import com.wims.backend.entity.CartItem;
 import com.wims.backend.entity.Product;
 import com.wims.backend.entity.User;
 import com.wims.backend.exception.AppException;
-import com.wims.backend.mapper.CartItemMapper;
-import com.wims.backend.mapper.CartMapper;
 import com.wims.backend.repository.CartItemRepository;
 import com.wims.backend.repository.CartRepository;
 import com.wims.backend.repository.ProductRepository;
 import com.wims.backend.repository.UserRepository;
+import com.wims.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +32,8 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
 
+    private final SecurityUtils securityUtils;
+
     // Hàm nội bộ để lấy hoặc tạo giỏ hàng
     private Cart getOrCreateCart(User user) {
         Cart cart = cartRepository.findByUserId(user.getId());
@@ -48,10 +48,9 @@ public class CartService {
 
     @Transactional
     public CartResponse addToCart(CartItemRequest request) {
-        // 1. Lấy User
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(1001, "User không tồn tại"));
+
+        // Lấy Entity User thật ra (Hàm .user() hoặc .getUser() tùy con viết trong record)
+        User user = securityUtils.getCurrentUserLogin();
 
         // 2. Tìm Product
         Product product = productRepository.findById(request.getProductId())
@@ -112,11 +111,11 @@ public class CartService {
 
     // Lấy giỏ hàng hiện tại
     public CartResponse getMyCart() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(1001, "User không tồn tại"));
 
-        Cart cart = getOrCreateCart(user); // Tái sử dụng hàm này để đảm bảo luôn có giỏ trả về
+        // Lấy Entity User thật ra (Hàm .user() hoặc .getUser() tùy con viết trong record)
+        User currentUser = securityUtils.getCurrentUserLogin();
+
+        Cart cart = getOrCreateCart(currentUser); // Tái sử dụng hàm này để đảm bảo luôn có giỏ trả về
 
         return toCartResponse(cart);
     }

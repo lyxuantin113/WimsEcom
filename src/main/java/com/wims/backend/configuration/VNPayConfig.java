@@ -65,8 +65,6 @@ public class VNPayConfig {
         return sb.toString();
     }
 
-    // VNPayConfig.java
-
     public static String hashAllFields(Map fields) {
         List fieldNames = new ArrayList(fields.keySet());
         Collections.sort(fieldNames);

@@ -4,14 +4,11 @@ import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.request.CategoryRequestDTO;
 import com.wims.backend.dto.response.CategoryResponse;
 import com.wims.backend.dto.response.PageResponse;
-import com.wims.backend.entity.Category;
-import com.wims.backend.service.CategoryService;
+import com.wims.backend.service.based.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")

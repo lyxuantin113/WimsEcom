@@ -1,4 +1,4 @@
-package com.wims.backend.service;
+package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.LoginRequest;
 import com.wims.backend.dto.response.LoginResponse;

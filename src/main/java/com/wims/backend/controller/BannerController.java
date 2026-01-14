@@ -3,15 +3,13 @@ package com.wims.backend.controller;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.request.BannerRequest;
 import com.wims.backend.dto.response.BannerResponse;
-import com.wims.backend.service.BannerService;
+import com.wims.backend.service.based.BannerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static java.util.stream.DoubleStream.builder;
 
 @RestController
 @RequestMapping("/api/banners")
