@@ -2,6 +2,7 @@ package com.wims.backend.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@EnableJpaRepositories(basePackages = "com.wims.backend.repository")
 public class RedisConfig {
 
     // 1. Cấu hình RedisTemplate (Để thao tác thủ công sau này nếu cần)

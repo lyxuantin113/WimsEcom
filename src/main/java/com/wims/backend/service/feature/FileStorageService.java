@@ -17,7 +17,6 @@ public class FileStorageService {
 
     public String uploadImage(MultipartFile file) throws IOException {
         // 1. Upload file lên Cloudinary
-        // "folder": "wims_product_images" -> Nó sẽ tạo thư mục này trên cloud để chứa ảnh
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                 "folder", "wims_product_images"
         ));

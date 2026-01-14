@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  # 1. APP BACKEND
+  backend-app:
+    image: tinly2kin/wims-backend:v1.0
+    container_name: wims-backend-prod
+    restart: always
+    ports:
+      - "80:8080" # Mở cổng 80 (Cổng Web mặc định) trỏ vào 8080 của App
+      # Khách truy cập chỉ cần gõ http://IP-Server (không cần :8080 )
+    depends_on:
+      - postgresdb
+      - redis
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/wims_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_REPOSITORIES_ENABLED=false
+      # Nếu có cấu hình Cloudinary/Mail
+    networks:
+      - wims-network
+
+  # 2. DATABASE (Giống hệt Dev, chỉ thêm restart policy)
+  postgresdb:
+    image: postgres:15-alpine
+    container_name: wims-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: wims_db
+    volumes:
+      # Mount ra thư mục thật trên Server để không mất dữ liệu
+      - ./postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - wims-network
+
+  # 3. REDIS (Giống hệt Dev)
+  redis:
+    image: redis:alpine
+    container_name: wims-redis-prod
+    restart: always
+    networks:
+      - wims-network
+
+networks:
+  wims-network:
+    driver: bridge

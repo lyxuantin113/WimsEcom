@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/static/**",
-                                "uploads/**"
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers("/api/banners/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()

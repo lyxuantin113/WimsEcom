@@ -7,7 +7,6 @@ spring:
 
   # Cấu hình Database cho PostgreSQL
   datasource:
-    # Lưu ý: jdbc:postgresql thay vì jdbc:mysql
     url: jdbc:postgresql://localhost:5432/wims_db
     username: postgres
     password: root
@@ -15,8 +14,10 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
+      repositories:
+        enabled: false
 
   # Cấu hình JPA
   jpa:
@@ -25,10 +26,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        # Dialect giúp Hibernate nói tiếng Postgres chuẩn nhất
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Dòng này giúp Postgres format code SQL đẹp hơn trong log
         format_sql: true
+    open-in-view: false
 
   servlet:
     multipart:
@@ -39,8 +38,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: lyxuantin113@gmail.com # 🔴 Thay email của bạn
-    password: kzhozerfsagcpyon    # 🔴 Thay App Password (không phải pass đăng nhập)
+    username: lyxuantin113@gmail.com
+    password: kzhozerfsagcpyon
     properties:
       mail:
         smtp:

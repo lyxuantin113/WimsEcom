@@ -1,0 +1,7 @@
+target/
+.git/
+.idea/
+*.iml
+HELP.md
+Dockerfile
+docker-compose.yaml

@@ -1,25 +1,51 @@
 version: '3.8'
 services:
-  # Thay mysqldb bằng postgresdb
+  # 1. APP
+  backend-app:
+    container_name: wims-backend
+    build: .
+    ports:
+      - "8080:8080" # Map cổng 8080 của máy vào 8080 của container
+    depends_on:
+      - postgresdb
+      - redis
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/wims_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    networks:
+      - wims-network
+
+  # 2. DATABASE
   postgresdb:
-    image: postgres:15-alpine # Bản nhẹ và ổn định
+    image: postgres:15-alpine
     container_name: wims-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres # Mặc định là postgres
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: wims_db
     ports:
-      - "5432:5432" # Port mặc định của Postgres
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wims-network
 
-  # Redis giữ nguyên
+  # 3. REDIS
   redis:
     image: redis:alpine
     container_name: wims-redis
     ports:
       - "6379:6379"
+    networks:
+      - wims-network
 
 volumes:
-  postgres_data: # Đổi tên volume cho đúng chuẩn
+  postgres_data:
+
+networks:
+  wims-network:
+    driver: bridge
