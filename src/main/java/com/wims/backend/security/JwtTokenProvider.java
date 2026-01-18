@@ -15,7 +15,7 @@ public class JwtTokenProvider {
     private final String JWT_SECRET = "DayLaBiMatCuaWIMSBackendDungChoAiBietNheChuoiNayPhaiRatDaiMoiDuoc";
 
     // 2. Thời gian hết hạn của Token (Ví dụ: 1 ngày = 86400000 ms)
-    private final long JWT_EXPIRATION = 86400000L;
+    private final long JWT_EXPIRATION = 60000L;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());

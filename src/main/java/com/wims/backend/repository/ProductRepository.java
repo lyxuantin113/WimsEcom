@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,9 +28,10 @@ public interface ProductRepository extends
     // Related Products
     Page<Product> findByCategoryIdAndIdNot(Long categoryId, Long excludedId, Pageable pageable);
 
-    // Out of Stock
-
-
     @Query("SELECT COUNT(p) FROM Product p WHERE YEAR(p.createdAt) = :year")
     long countProductByYear(@Param("year") int year);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :quantity WHERE p.id = :id")
+    void incrementStock(@Param("id") Long id, @Param("quantity") int quantity);
 }

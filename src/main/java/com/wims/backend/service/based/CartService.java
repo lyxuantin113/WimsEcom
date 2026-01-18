@@ -25,6 +25,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CartService {
 
     private final UserRepository userRepository;
@@ -69,9 +70,7 @@ public class CartService {
         int currentQuantityInCart = 0;
 
         // Tìm xem sản phẩm đã có trong giỏ chưa để lấy số lượng cũ
-        Optional<CartItem> existingItemCheck = cart.getCartItems().stream()
-                .filter(item -> item.getProduct().getId().equals(product.getId()))
-                .findFirst();
+        Optional<CartItem> existingItemCheck = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
 
         if (existingItemCheck.isPresent()) {
             currentQuantityInCart = existingItemCheck.get().getQuantity();
@@ -102,8 +101,8 @@ public class CartService {
             cart.getCartItems().add(newItem);
         }
 
-        // 5. Lưu tất cả xuống DB
-        cart = cartRepository.save(cart);
+        // 5. Dirty Checking
+        // cart = cartRepository.save(cart);
 
         // 6. Trả về response
         return toCartResponse(cart);

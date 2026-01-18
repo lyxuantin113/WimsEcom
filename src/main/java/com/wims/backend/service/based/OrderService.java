@@ -34,12 +34,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final UserRepository userRepository; // Để lấy thông tin người mua
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
 
     private final OrderMapper orderMapper;
 
@@ -186,7 +187,8 @@ public class OrderService {
             rawTotal = rawTotal.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
-        productRepository.saveAll(products);
+        // Tận dụng Dirty Checking
+        // productRepository.saveAll(products);
 
         // Gán list detail vào order
         order.setOrderDetails(details);
@@ -205,8 +207,11 @@ public class OrderService {
         // 8. Xóa giỏ hàng
         Cart cart = cartRepository.findByUserId(user.getId());
         if (cart != null) {
-            cart.getCartItems().clear();
-            cartRepository.save(cart);
+//            cart.getCartItems().clear();
+//            cartRepository.save(cart);
+
+            // 1 câu SQL: DELETE FROM cart_item WHERE cart_id = ?
+            cartItemRepository.deleteAllByCartId(cart.getId());
         }
 
         // 9. Fix lỗi Email trong Transaction: BẮN EVENT
@@ -310,19 +315,15 @@ public class OrderService {
     }
 
     private void restock(Order order, OrderStatus newStatus) {
-        if ((newStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) ||
-                (newStatus == OrderStatus.RETURNED && order.getStatus() != OrderStatus.RETURNED)) {
 
-            List<Product> products = new ArrayList<>();
+        // Check xem status CŨ có phải là đã hủy/trả chưa để tránh cộng 2 lần
+        boolean isCancelOrReturn = newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.RETURNED;
+        boolean isAlreadyRestocked = order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.RETURNED;
 
+        if (isCancelOrReturn && !isAlreadyRestocked) {
             for (OrderDetail detail : order.getOrderDetails()) {
-                Product product = detail.getProduct();
-                product.setStockQuantity(product.getStockQuantity() + detail.getQuantity());
-                products.add(product);
+                productRepository.incrementStock(detail.getProduct().getId(), detail.getQuantity());
             }
-
-            productRepository.saveAll(products);
-
         }
     }
 }

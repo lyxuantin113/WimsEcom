@@ -25,6 +25,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 
 @Service // Đánh dấu đây là nơi xử lý nghiệp vụ
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
 
     // DI: Tiêm Repository vào để dùng
@@ -118,6 +121,7 @@ public class ProductService {
     }
 
     // Hàm tạo sản phẩm mới
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductResponse createProduct(ProductRequestDTO request) {
         // 1. Validate: Kiểm tra xem mã sản phẩm đã tồn tại chưa
         if (productRepository.findByCode(request.getCode()).isPresent()) {
@@ -165,6 +169,7 @@ public class ProductService {
             @CacheEvict(value = "product_detail", key = "#id"),
             @CacheEvict(value = "product_search", allEntries = true)
     })
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductResponse updateProduct(Long id, ProductRequestDTO request) {
         // 1. Tìm sản phẩm
         Product product = productRepository.findById(id)
