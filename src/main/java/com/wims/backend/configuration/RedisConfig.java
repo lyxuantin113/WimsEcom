@@ -39,7 +39,7 @@ public class RedisConfig {
     // 2. Cấu hình RedisCacheManager (Để @Cacheable hoạt động với JSON)
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // 1. Cấu hình mặc định cho tất cả các cache (Ví dụ: 1 giờ)
+        // 1. Cấu hình mặc định cho tất cả các cache
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));

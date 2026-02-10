@@ -56,12 +56,12 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequestDTO request) {
-        // 1. Tìm xem danh mục có tồn tại không
+        // 1. Kiểm tra tồn tại
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(1004, "Danh mục không tồn tại"));
 
         // 2. Cập nhật thông tin (Dùng Mapper update hoặc Set thủ công)
-        // Cách 1: Set thủ công (An toàn, dễ hiểu)
+        // Cách 1: Set thủ công
         category.setName(request.getName());
 
         // Cách 2: Nếu dùng MapStruct nâng cao (@MappingTarget)

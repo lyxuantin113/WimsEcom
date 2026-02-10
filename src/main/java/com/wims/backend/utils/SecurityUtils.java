@@ -18,7 +18,7 @@ public class SecurityUtils {
             return null;
         }
 
-        // Ép kiểu về CustomUserDetails (Record con vừa tạo)
+        // Ép kiểu về CustomUserDetails
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         // Trả về Entity User thật

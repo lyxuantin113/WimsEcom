@@ -6,12 +6,13 @@ import java.math.BigDecimal;
 
 public class ProductSpecification {
 
-    // 1. Mảnh Lego: Lọc theo tên (Chứa từ khóa, không phân biệt hoa thường)
+    // 1. Lọc theo tên (Chứa từ khóa, không phân biệt hoa thường)
     public static Specification<Product> hasName(String name) {
         return (root, query, criteriaBuilder) -> {
             if (name == null || name.isEmpty()) {
-                return null; // Nếu tên rỗng -> Không lọc gì cả (trả về null)
+                return null; // Nếu tên rỗng -> Không lọc gì cả
             }
+
             // Logic: WHERE LOWER(name) LIKE %name%
             return criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("name")),
@@ -20,7 +21,7 @@ public class ProductSpecification {
         };
     }
 
-    // 2. Mảnh Lego: Lọc theo khoảng giá (minPrice <= price <= maxPrice)
+    // 2. Lọc theo khoảng giá (minPrice <= price <= maxPrice)
     public static Specification<Product> hasPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         return (root, query, criteriaBuilder) -> {
             if (minPrice == null && maxPrice == null) {
@@ -57,7 +58,7 @@ public class ProductSpecification {
             if (categoryId == null) return null;
 
             // Truy cập vào bảng quan hệ 'category', lấy trường 'id' so sánh
-            // Lưu ý: "category" là tên biến @ManyToOne trong Entity Product
+            // Với "category" là tên biến @ManyToOne trong Entity Product
             return criteriaBuilder.equal(root.get("category").get("id"), categoryId);
         };
     }

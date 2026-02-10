@@ -16,14 +16,9 @@ import java.util.Optional;
 public interface ProductRepository extends
         JpaRepository<Product, Long>,
         JpaSpecificationExecutor<Product> {
-    // JpaRepository đã có sẵn các hàm: save(), findAll(), findById(), delete()...
-    // Chúng ta chỉ cần khai báo thêm các hàm tìm kiếm đặc thù nếu cần.
 
-    // Ví dụ: Tìm sản phẩm theo Mã code (để check trùng)
-    // Spring sẽ tự dịch cái tên hàm này thành SQL: SELECT * FROM products WHERE code = ?
+    // SELECT * FROM products WHERE code = ?
     Optional<Product> findByCode(String code);
-
-    Product getProductByIdIs(Long id);
 
     // Related Products
     Page<Product> findByCategoryIdAndIdNot(Long categoryId, Long excludedId, Pageable pageable);
@@ -31,7 +26,7 @@ public interface ProductRepository extends
     @Query("SELECT COUNT(p) FROM Product p WHERE YEAR(p.createdAt) = :year")
     long countProductByYear(@Param("year") int year);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :quantity WHERE p.id = :id")
     void incrementStock(@Param("id") Long id, @Param("quantity") int quantity);
 }

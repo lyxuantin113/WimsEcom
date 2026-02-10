@@ -12,8 +12,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     // Tìm xem trong giỏ hàng này đã có sản phẩm này chưa (để cộng dồn số lượng)
     Optional<CartItem> findByCartIdAndProductId(Long cartId, Long productId);
 
-    @Modifying // Bắt buộc vì đây là lệnh thay đổi dữ liệu (UPDATE/DELETE)
     // Query xóa thẳng trong DB, không lôi lên RAM
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM CartItem c WHERE c.cart.id = :cartId")
     void deleteAllByCartId(@Param("cartId") Long cartId);
 }

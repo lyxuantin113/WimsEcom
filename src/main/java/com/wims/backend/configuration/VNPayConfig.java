@@ -1,6 +1,7 @@
 package com.wims.backend.configuration;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.Mac;
@@ -12,11 +13,37 @@ import java.util.*;
 
 @Configuration
 public class VNPayConfig {
-    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_ReturnUrl = "http://localhost:5173/payment-result"; // Link FE khi thanh toán xong
-    public static String vnp_TmnCode = "EP00AIH4";
-    public static String vnp_HashSecret = "TIKM7PQZ7600Y1LRDG383QB13SVX13M8";
-    public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+
+    public static String vnp_PayUrl;
+    public static String vnp_ReturnUrl;
+    public static String vnp_TmnCode;
+    public static String vnp_HashSecret;
+    public static String vnp_ApiUrl;
+
+    @Value("${vnpay.payurl}")
+    public void setVnp_PayUrl(String payUrl) {
+        vnp_PayUrl = payUrl;
+    }
+
+    @Value("${vnpay.returnurl}")
+    public void setVnp_ReturnUrl(String returnUrl) {
+        vnp_ReturnUrl = returnUrl;
+    }
+
+    @Value("${vnpay.tmncode}")
+    public void setVnp_TmnCode(String tmnCode) {
+        vnp_TmnCode = tmnCode;
+    }
+
+    @Value("${vnpay.hashsecret}")
+    public void setVnp_HashSecret(String hashSecret) {
+        vnp_HashSecret = hashSecret;
+    }
+
+    @Value("${vnpay.apiurl}")
+    public void setVnp_ApiUrl(String apiUrl) {
+        vnp_ApiUrl = apiUrl;
+    }
 
     // Hàm tiện ích: Hash dữ liệu bằng HMAC SHA512
     public static String hmacSHA512(String key, String data) {

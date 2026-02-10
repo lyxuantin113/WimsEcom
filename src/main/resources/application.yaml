@@ -39,7 +39,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: lyxuantin113@gmail.com
-    password: kzhozerfsagcpyon
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -50,3 +50,23 @@ spring:
           connectiontimeout: 5000
           timeout: 3000
           writetimeout: 5000
+
+frontend:
+  baseurl: ${FE_URL:http://localhost:5173}
+
+cloudinary:
+  cloudname: ${CLOUDINARY_NAME}
+  key: ${CLOUDINARY_KEY}
+  secret: ${CLOUDINARY_SECRET}
+  secure: true
+
+vnpay:
+  payurl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  returnurl: ${FE_URL}/payment-result
+  tmncode: ${VNP_TMN_CODE}
+  hashsecret: ${VNP_HASH_SECRET}
+  apiurl: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+
+jwt:
+  secretkey: ${JWT_SECRET_KEY:ChuoiBiMatNgaoNhienSieuDai123456}
+  expiration: "60000L"

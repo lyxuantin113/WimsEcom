@@ -2,11 +2,12 @@ package com.wims.backend.configuration;
 
 import com.wims.backend.security.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.filters.CorsFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,12 +29,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // Inject filter vào
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @Value("${frontend.baseurl}")
+    private String FE_URL;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Thuật toán băm mật khẩu chuẩn quốc tế
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -42,29 +46,27 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 👈 Gắn chốt chặn 401 vào đây
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
+
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/index.html",
-                                "/login.html",
-                                "/product-form.html",  // <--- Thêm dòng này
-                                "/category.html",
-                                "/checkout.html",
                                 "/css/**",
                                 "/js/**",
                                 "/static/**",
                                 "/uploads/**"
                         ).permitAll()
-                        .requestMatchers("/api/banners/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
 
                         // 1. Cho lấy danh sách để hiển thị nhưng search chỉ lưu lịch sử của người đã login
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                        .requestMatchers("/api/banners/**").permitAll()
                         .requestMatchers("/api/products/search-history").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
 
                         // 2. Các hành động thay đổi dữ liệu (POST, PUT, DELETE) bắt buộc phải là ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
@@ -73,7 +75,6 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-
                 // Chèn filter của ta vào trước filter mặc định của Spring
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -85,10 +86,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 🟢 QUAN TRỌNG: Phải chỉ đích danh Frontend, KHÔNG ĐƯỢC DÙNG "*"
-        // Vì cậu có gửi kèm Token (Credential), trình duyệt bắt buộc phải rõ ràng nguồn gốc.
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-
+        configuration.setAllowedOrigins(List.of(FE_URL));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true); // Cho phép gửi Cookie/Token

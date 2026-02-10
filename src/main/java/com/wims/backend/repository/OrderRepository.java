@@ -14,7 +14,7 @@ import java.util.List;
 
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    // Tìm các đơn hàng của 1 user cụ thể (Để làm trang Lịch sử mua hàng)
+    // Tìm các đơn hàng của 1 user cụ thể
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
     // Query Thống kê cho DASHBOARD

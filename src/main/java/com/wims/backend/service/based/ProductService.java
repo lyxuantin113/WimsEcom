@@ -112,30 +112,25 @@ public class ProductService {
 
     @Cacheable(value = "product_detail", key = "#id")
     public ProductResponse getProductById(Long id) {
-        // 1. Tìm sản phẩm, nếu không thấy thì NÉM LỖI NGAY (để Controller trả về 404)
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new AppException(1003, "Sản phẩm không tồn tại với id: " + id));
-
-        // 2. Map sang DTO
+                .orElseThrow(() -> new AppException(1004, "Sản phẩm không tồn tại với id: " + id));
         return productMapper.toProductResponse(product);
     }
 
-    // Hàm tạo sản phẩm mới
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductResponse createProduct(ProductRequestDTO request) {
-        // 1. Validate: Kiểm tra xem mã sản phẩm đã tồn tại chưa
         if (productRepository.findByCode(request.getCode()).isPresent()) {
-            throw new AppException(1001, "Sản phẩm mã " + request.getCode() + " đã tồn tại!");
+            throw new AppException(1004, "Sản phẩm mã " + request.getCode() + " đã tồn tại!");
         }
 
-        // 2. Kiểm tra và lưu file trước khi chạm đến DB
+        // Kiểm tra và lưu file trước khi chạm đến DB
         String imageUrl = null;
 
         if (request.getFile() != null && !request.getFile().isEmpty()) {
             try {
                 imageUrl = fileStorageService.uploadImage(request.getFile());
             } catch (IOException e) {
-                throw new AppException(9999, "Lỗi upload ảnh: " + e.getMessage());
+                throw new AppException(8888, "Lỗi upload ảnh: " + e.getMessage());
             }
         }
 
@@ -164,7 +159,6 @@ public class ProductService {
         return productMapper.toProductResponse(product);
     }
 
-    // Sửa sản phẩm
     @Caching(evict = {
             @CacheEvict(value = "product_detail", key = "#id"),
             @CacheEvict(value = "product_search", allEntries = true)
@@ -229,8 +223,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(1003, "Không tìm thấy sản phẩm id: " + id));
 
-        // 2. Xóa ảnh trong ổ cứng (NẾU CÓ) - Logic mới thêm
-        // Xóa ảnh trên Cloud
+        // 2. Xóa ảnh
         if (product.getImage() != null && !product.getImage().isEmpty()) {
             try {
                 fileStorageService.deleteImage(product.getImage());

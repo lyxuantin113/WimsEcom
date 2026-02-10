@@ -12,19 +12,18 @@ import org.springframework.security.access.AccessDeniedException;
 @ControllerAdvice // Đánh dấu đây là nơi bắt lỗi toàn cục
 public class GlobalExceptionHandler {
 
-    // 1. Bắt lỗi do chính mình tạo ra (AppException)
+    // 1. Bắt lỗi tự tạo
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> handlingAppException(AppException exception) {
         ApiResponse apiResponse = new ApiResponse();
 
-        apiResponse.setCode(exception.getErrorCode()); // Lấy mã lỗi mình quy định
-        apiResponse.setMessage(exception.getMessage()); // Lấy thông báo lỗi
+        apiResponse.setCode(exception.getErrorCode());
+        apiResponse.setMessage(exception.getMessage());
 
-        // Trả về HTTP 400 (Bad Request) kèm theo body chuẩn
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
-    // 2. Bắt các lỗi còn lại chưa lường trước được (RuntimeException)
+    // 2. Bắt các lỗi còn lại chưa lường trước (RuntimeException)
     @ExceptionHandler(value = RuntimeException.class)
     ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception) {
         ApiResponse apiResponse = new ApiResponse();
@@ -53,8 +52,8 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception) {
         ApiResponse apiResponse = new ApiResponse();
 
-        // Code 1003 (ví dụ): Bạn không có quyền truy cập
-        apiResponse.setCode(1003);
+        // Code 987 Bạn không có quyền truy cập
+        apiResponse.setCode(987);
         apiResponse.setMessage("Bạn không có quyền thực hiện chức năng này (Chỉ dành cho Admin)");
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiResponse);

@@ -18,6 +18,14 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_DATA_REDIS_REPOSITORIES_ENABLED=false
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - VNP_HASH_SECRET=${VNP_HASH_SECRET}
+      - CLOUDINARY_SECRET=${CLOUDINARY_SECRET}
+      - CLOUDINARY_NAME=${CLOUDINARY_NAME}
+      - CLOUDINARY_KEY=${CLOUDINARY_KEY}
+      - VNP_TMN_CODE=${VNP_TMN_CODE}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - FE_BASE_URL=${FE_URL}
       # Nếu có cấu hình Cloudinary/Mail
     networks:
       - wims-network

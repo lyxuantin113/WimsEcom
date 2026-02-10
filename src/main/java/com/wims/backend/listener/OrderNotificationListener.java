@@ -42,8 +42,6 @@ public class OrderNotificationListener {
         Order order = event.getOrder();
         OrderStatus newStatus = event.getNewStatus();
 
-        // Lưu ý: Đảm bảo 'order.getUser()' đã được load từ bên Service
-        // Nếu không sẽ bị lỗi LazyInitializationException tại đây.
         String email = order.getUser().getEmail();
         String username = order.getUser().getUsername();
 
@@ -53,7 +51,7 @@ public class OrderNotificationListener {
         // 1. Socket (Luôn gửi)
         notificationService.sendWebSocketNotification(username, notiMsg, order.getId());
 
-        // 2. Email (Gửi có chọn lọc)
+        // 2. Email (Có điều kiện)
         if (shouldSendEmail(newStatus)) {
             String subject = "Cập nhật đơn hàng #" + order.getId();
             String body = "Xin chào " + order.getCustomerName() + ",\n\n"
@@ -63,7 +61,7 @@ public class OrderNotificationListener {
         }
     }
 
-    // Tách hàm check logic gửi mail cho gọn code
+    // Check trạng thái gửi mail
     private boolean shouldSendEmail(OrderStatus status) {
         return status == OrderStatus.PAID
                 || status == OrderStatus.SHIPPING

@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 1. Lấy JWT từ request (Header: Authorization)
             String jwt = getJwtFromRequest(request);
 
-            // 2. Validate Token: Có phải hàng thật không? Có hết hạn không?
+            // 2. Validate Token
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
 
                 // 3. Lấy username từ chuỗi token
@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // Cắt bỏ chữ "Bearer " để lấy token
+            return bearerToken.substring(7);
         }
         return null;
     }

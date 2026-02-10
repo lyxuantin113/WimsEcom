@@ -18,9 +18,9 @@ public record CustomUserDetails(User user) implements UserDetails {
     // 👇 Map các hàm của UserDetails vào field của Entity
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Giả sử Entity User có field 'role'
+
         return user.getRoles().stream().map(role -> {
-            String roleName = role.getName(); // Ví dụ: "ADMIN"
+            String roleName = role.getName();
 
             // Kiểm tra xem trong DB đã có chữ ROLE_ chưa để tránh cộng dồn
             if (!roleName.startsWith("ROLE_")) {
@@ -38,8 +38,8 @@ public record CustomUserDetails(User user) implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
-    } // Hoặc user.getUsername()
+        return user.getUsername();
+    }
 
     @Override
     public boolean isAccountNonExpired() {

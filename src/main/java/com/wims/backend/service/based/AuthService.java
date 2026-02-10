@@ -27,15 +27,15 @@ public class AuthService {
         // 2. Kiểm tra mật khẩu (So sánh mật khẩu gửi lên vs mật khẩu mã hóa trong DB)
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!matches) {
-            throw new AppException(1006, "Mật khẩu không đúng");
+            throw new AppException(986, "Mật khẩu không đúng");
         }
 
-        // 3. Nếu đúng hết -> Sinh Token trả về
+        // 3. Nếu đúng -> Sinh Token trả về
         String token = jwtTokenProvider.generateToken(user.getUsername());
 
         String roleName = user.getRoles().stream()
-                .map(Role::getName) // Lấy ra tên (VD: "ADMIN")
-                .findFirst()                 // Lấy phần tử đầu tiên
+                .map(Role::getName)
+                .findFirst()
                 .orElse("");
 
         return LoginResponse.builder()

@@ -2,6 +2,7 @@ package com.wims.backend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
@@ -10,12 +11,11 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     // 1. Secret Key: Chìa khóa bí mật để ký tên lên Token.
-    // Trong thực tế phải để trong application.yaml và cực kỳ phức tạp.
-    // Ở đây demo mình để cứng một chuỗi dài (ít nhất 64 ký tự).
-    private final String JWT_SECRET = "DayLaBiMatCuaWIMSBackendDungChoAiBietNheChuoiNayPhaiRatDaiMoiDuoc";
+    @Value("${jwt.secretkey}")
+    private String JWT_SECRET;
 
-    // 2. Thời gian hết hạn của Token (Ví dụ: 1 ngày = 86400000 ms)
-    private final long JWT_EXPIRATION = 60000L;
+    @Value("${jwt.expiration}")
+    private long JWT_EXPIRATION;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
@@ -44,7 +44,7 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    // VALIDATE TOKEN (Kiểm tra xem token có phải hàng pha-ke hay hết hạn không)
+    // VALIDATE TOKEN
     public boolean validateToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(authToken);

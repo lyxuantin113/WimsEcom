@@ -28,7 +28,6 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class CartService {
 
-    private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -50,7 +49,7 @@ public class CartService {
     @Transactional
     public CartResponse addToCart(CartItemRequest request) {
 
-        // Lấy Entity User thật ra (Hàm .user() hoặc .getUser() tùy con viết trong record)
+        // Lấy Entity User thật
         User user = securityUtils.getCurrentUserLogin();
 
         // 2. Tìm Product
@@ -62,11 +61,10 @@ public class CartService {
 
         // A. Kiểm tra số lượng âm (Validation)
         if (request.getQuantity() <= 0) {
-            // Mã lỗi 1005: Bạn có thể định nghĩa lại trong file ErrorCode của bạn
-            throw new AppException(1005, "Số lượng sản phẩm phải lớn hơn 0");
+            throw new AppException(1015, "Số lượng sản phẩm phải lớn hơn 0");
         }
 
-        // B. Tính toán tổng số lượng dự kiến (Trong giỏ + Muốn thêm)
+        // B. Tính toán tổng số lượng dự kiến (Trong giỏ + thêm)
         int currentQuantityInCart = 0;
 
         // Tìm xem sản phẩm đã có trong giỏ chưa để lấy số lượng cũ
@@ -78,21 +76,20 @@ public class CartService {
 
         int totalRequestedQuantity = currentQuantityInCart + request.getQuantity();
 
-        // C. Kiểm tra tồn kho (ATP Check)
-        // Lưu ý: Hãy đảm bảo entity Product của bạn có field 'quantity' hoặc 'stock'
+        // C. Kiểm tra tồn kho
         if (totalRequestedQuantity > product.getStockQuantity()) {
-            throw new AppException(1006,
+            throw new AppException(1016,
                     "Số lượng vượt quá tồn kho. Kho còn: " + product.getStockQuantity() +
                             ", Trong giỏ bạn đang có: " + currentQuantityInCart);
         }
 
-        // 4. Logic thêm/sửa item (Code cũ của bạn giữ nguyên)
+        // 4. Logic thêm/sửa item
         if (existingItemCheck.isPresent()) {
-            // TRƯỜNG HỢP 1: Đã có -> Cộng dồn
+            // Case 1: Đã có -> Cộng dồn
             CartItem existingItem = existingItemCheck.get();
-            existingItem.setQuantity(totalRequestedQuantity); // Set bằng tổng đã tính ở trên
+            existingItem.setQuantity(totalRequestedQuantity);
         } else {
-            // TRƯỜNG HỢP 2: Chưa có -> Tạo mới
+            // Case 2: Chưa có -> Tạo mới
             CartItem newItem = CartItem.builder()
                     .product(product)
                     .cart(cart)
@@ -110,12 +107,8 @@ public class CartService {
 
     // Lấy giỏ hàng hiện tại
     public CartResponse getMyCart() {
-
-        // Lấy Entity User thật ra (Hàm .user() hoặc .getUser() tùy con viết trong record)
         User currentUser = securityUtils.getCurrentUserLogin();
-
         Cart cart = getOrCreateCart(currentUser); // Tái sử dụng hàm này để đảm bảo luôn có giỏ trả về
-
         return toCartResponse(cart);
     }
 
@@ -123,23 +116,23 @@ public class CartService {
     public CartResponse updateCartItem(Long itemId, int quantity) {
         // 1. Tìm CartItem
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new AppException(1004, "Sản phẩm trong giỏ không tồn tại"));
+                .orElseThrow(() -> new AppException(1014, "Sản phẩm trong giỏ không tồn tại"));
 
         // 2. Validate số lượng
         if (quantity <= 0) {
             // Nếu số lượng <= 0 thì xóa luôn
             cartItemRepository.delete(item);
         } else {
-            // Check tồn kho (nếu cần kỹ)
+            // Check tồn kho
             if (quantity > item.getProduct().getStockQuantity()) {
-                throw new AppException(1006, "Kho chỉ còn " + item.getProduct().getStockQuantity());
+                throw new AppException(1016, "Kho chỉ còn " + item.getProduct().getStockQuantity());
             }
             item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
 
         // 3. Trả về giỏ hàng mới nhất (để FE update lại giao diện)
-        // Lưu ý: item.getCart() có thể chưa update list items trong bộ nhớ,
+        // item.getCart() có thể chưa update list items trong bộ nhớ,
         // nên an toàn nhất là query lại cart của user đó.
         return getMyCart();
     }

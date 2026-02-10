@@ -48,7 +48,7 @@ public class BannerService {
                 String imageUrl = fileStorageService.uploadImage(request.getFile());
                 banner.setImageUrl(imageUrl); // Lưu link vào DB
             } catch (IOException e) {
-                throw new AppException(9999, "Lỗi upload ảnh: " + e.getMessage());
+                throw new AppException(8888, "Lỗi upload ảnh: " + e.getMessage());
             }
         }
 
@@ -74,7 +74,7 @@ public class BannerService {
                 banner.setImageUrl(newImageUrl);
 
             } catch (IOException e) {
-                throw new AppException(9999, "Lỗi xử lý ảnh khi update: " + e.getMessage());
+                throw new AppException(8888, "Lỗi xử lý ảnh khi update: " + e.getMessage());
             }
         } else {
             banner.setImageUrl(oldImageUrl);
@@ -93,7 +93,7 @@ public class BannerService {
                 fileStorageService.deleteImage(banner.getImageUrl());
             }
         } catch (IOException e) {
-            throw new AppException(9999, "Lỗi xử lý ảnh khi update: " + e.getMessage());
+            throw new AppException(8888, "Lỗi xử lý ảnh khi update: " + e.getMessage());
         }
 
         bannerRepository.deleteById(id);

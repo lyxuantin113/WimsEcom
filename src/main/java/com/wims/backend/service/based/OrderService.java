@@ -80,7 +80,7 @@ public class OrderService {
         User user = securityUtils.getCurrentUserLogin();
 
         if (user == null) {
-            throw new AppException(1001, "User không tồn tại !");
+            throw new AppException(1004, "User không tồn tại !");
         }
 
         Page<Order> orderList = orderRepository.findByUserId(user.getId(), pageable);
@@ -107,8 +107,8 @@ public class OrderService {
                 ? OrderStatus.PENDING_PAYMENT
                 : OrderStatus.PENDING_CONFIRMATION;
 
-        // 3. Khởi tạo Order (Chưa save vội)
-        // & Query -> Map tránh N+1
+        // 3. Khởi tạo Order
+        // Query -> Map tránh N+1
         Order order = Order.builder()
                 .user(user)
                 .customerName(request.getCustomerName())
@@ -130,7 +130,7 @@ public class OrderService {
 
         // Validate: Check xem có sản phẩm nào không tìm thấy không
         if (products.size() != productIds.size()) {
-            throw new AppException(1003, "Một số sản phẩm không tồn tại hoặc đã bị xóa");
+            throw new AppException(1004, "Một số sản phẩm không tồn tại hoặc đã bị xóa");
         }
 
         // 4. Xử lý Items & Kho & Tính Raw Total
@@ -187,7 +187,7 @@ public class OrderService {
             rawTotal = rawTotal.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
-        // Tận dụng Dirty Checking
+        // Dirty Checking
         // productRepository.saveAll(products);
 
         // Gán list detail vào order
@@ -210,7 +210,7 @@ public class OrderService {
 //            cart.getCartItems().clear();
 //            cartRepository.save(cart);
 
-            // 1 câu SQL: DELETE FROM cart_item WHERE cart_id = ?
+            // DELETE FROM cart_item WHERE cart_id = ?
             cartItemRepository.deleteAllByCartId(cart.getId());
         }
 
@@ -248,7 +248,7 @@ public class OrderService {
         return orderMapper.toOrderResponse(savedOrder);
     }
 
-    // Lấy chi tiết đơn hàng (Có bảo mật: Chỉ Admin hoặc Chính chủ mới được xem)
+    // Lấy chi tiết đơn hàng (Chỉ Admin hoặc Chính chủ mới được xem)
     public OrderResponse getOrderById(Long orderId) {
         // Tìm đơn hàng trong DB
         Order order = orderRepository.findById(orderId)
@@ -260,7 +260,7 @@ public class OrderService {
         // 3. LOGIC BẢO VỆ: So sánh ID thay vì Username
         // Logic: Nếu KHÔNG PHẢI Admin VÀ ID người dùng KHÔNG TRÙNG ID chủ đơn -> Chặn
         if (!securityUtils.isAdmin() && !currentUser.getId().equals(order.getUser().getId())) {
-            throw new AppException(403, "Bạn không có quyền xem đơn hàng của người khác!");
+            throw new AppException(403, "Đơn hàng không tồn tại!");
         }
 
         // 5. Nếu qua được cửa ải trên -> Trả về dữ liệu
@@ -271,7 +271,7 @@ public class OrderService {
     public OrderResponse cancelOrder(Long orderId) {
 
         User user = securityUtils.getCurrentUserLogin();
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(1001, "Đơn hàng không tồn tại"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));
 
         if (!order.getUser().getUsername().equals(user.getUsername())) {
             throw new AppException(403, "Bạn không có quyền hủy đơn hàng này");
@@ -282,9 +282,6 @@ public class OrderService {
                 && order.getStatus() != OrderStatus.PENDING_PAYMENT) {
 
             throw new AppException(1009, "Đơn hàng đang giao hoặc đã hoàn thành, không thể hủy!");
-        }
-        else if (order.getStatus() == OrderStatus.CANCELLED) {
-            throw new AppException(1009, "Đơn hàng đã bị hủy trước đó");
         }
 
         restock(order, OrderStatus.CANCELLED);

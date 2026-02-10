@@ -176,25 +176,25 @@ public class VNPayService {
                                 .build();
                     } else {
                         return ApiResponse.<VNPayResponse>builder()
-                                .code(9999)
+                                .code(7777)
                                 .message("Số tiền thanh toán không khớp")
                                 .build();
                     }
                 } catch (Exception e) {
                     return ApiResponse.<VNPayResponse>builder()
-                            .code(9999)
+                            .code(7777)
                             .message("Lỗi xử lý đơn hàng: " + e.getMessage())
                             .build();
                 }
             } else {
                 return ApiResponse.<VNPayResponse>builder()
-                        .code(9999)
+                        .code(7777)
                         .message("Giao dịch thất bại tại VNPay")
                         .build();
             }
         } else {
             return ApiResponse.<VNPayResponse>builder()
-                    .code(9999)
+                    .code(7777)
                     .message("Chữ ký không hợp lệ (Checksum failed)")
                     .build();
         }

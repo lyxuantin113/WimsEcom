@@ -37,13 +37,13 @@ public class DiscountService {
 
         // 2. Validate điều kiện cơ bản
         if (discount.getUsedCount() >= discount.getUsageLimit()) {
-            throw new AppException(1005, "Mã giảm giá đã hết lượt sử dụng");
+            throw new AppException(2005, "Mã giảm giá đã hết lượt sử dụng");
         }
         if (LocalDateTime.now().isBefore(discount.getStartDate())) {
-            throw new AppException(1006, "Mã giảm giá chưa đến đợt áp dụng");
+            throw new AppException(2006, "Mã giảm giá chưa đến đợt áp dụng");
         }
         if (LocalDateTime.now().isAfter(discount.getEndDate())) {
-            throw new AppException(1007, "Mã giảm giá đã hết hạn");
+            throw new AppException(2007, "Mã giảm giá đã hết hạn");
         }
 
         BigDecimal totalOrderValue = BigDecimal.ZERO;
@@ -163,8 +163,6 @@ public class DiscountService {
                 .orElseThrow(() -> new AppException(1004, "Voucher không tồn tại"));
 
         // Nếu admin đổi code, phải check xem code mới có trùng ai không (trừ chính nó)
-        // Ở đây để đơn giản ta map thẳng, nếu trùng database constraint sẽ báo lỗi hoặc ta check thủ công
-
         discountMapper.updateDiscount(discount, request);
         return discountMapper.toDiscountResponse(discountRepository.save(discount));
     }
