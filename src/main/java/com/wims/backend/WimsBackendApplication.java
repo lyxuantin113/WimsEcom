@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 @EnableAsync
-//@EnableCaching
+@EnableCaching
 public class WimsBackendApplication {
 
 	public static void main(String[] args) {
