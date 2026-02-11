@@ -7,9 +7,9 @@ spring:
 
   # Cấu hình Database cho PostgreSQL
   datasource:
-    url: jdbc:postgresql://localhost:5432/wims_db
-    username: postgres
-    password: root
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   data:
