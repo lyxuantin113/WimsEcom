@@ -2,7 +2,9 @@ package com.wims.backend.controller;
 
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.request.LoginRequest;
+import com.wims.backend.dto.request.RegisterRequest;
 import com.wims.backend.dto.response.LoginResponse;
+import com.wims.backend.dto.response.RegisterResponse;
 import com.wims.backend.service.based.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,13 @@ public class AuthController {
     public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
         return ApiResponse.<LoginResponse>builder()
                 .result(authService.login(request))
+                .build();
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest request) {
+        return ApiResponse.<RegisterResponse>builder()
+                .result(authService.register(request))
                 .build();
     }
 }
