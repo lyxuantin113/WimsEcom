@@ -7,20 +7,19 @@ spring:
 
   # Cấu hình Database cho PostgreSQL
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: jdbc:postgresql://localhost:5432/wims_db
+    username: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
 
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:http://localhost:5173}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      host: http://localhost:5173
+      port: 6379
       repositories:
         enabled: false
       ssl:
-        enabled: true
+        enabled: false
 
   # Cấu hình JPA
   jpa:
@@ -43,7 +42,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: lyxuantin113@gmail.com
-    password: ${MAIL_PASSWORD}
+    password: kzhozerfsagcpyon
     properties:
       mail:
         smtp:
@@ -56,21 +55,21 @@ spring:
           writetimeout: 5000
 
 frontend:
-  baseurl: ${FE_URL:http://localhost:5173}
+  baseurl: http://localhost:5173
 
 cloudinary:
-  cloudname: ${CLOUDINARY_NAME}
-  key: ${CLOUDINARY_KEY}
-  secret: ${CLOUDINARY_SECRET}
+  cloudname: dfdyfg6bd
+  key: 374153475555556
+  secret: SUfU3BPGWnPM-B6AT_6aNWZvcUU
   secure: true
 
 vnpay:
   payurl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-  returnurl: ${FE_URL}/payment-result
-  tmncode: ${VNP_TMN_CODE}
-  hashsecret: ${VNP_HASH_SECRET}
+  returnurl: http://localhost:5173/payment-result
+  tmncode: EP00AIH4
+  hashsecret: TIKM7PQZ7600Y1LRDG383QB13SVX13M8
   apiurl: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
 jwt:
-  secretkey: ${JWT_SECRET_KEY:ChuoiBiMatNgaoNhienSieuDai123456}
+  secretkey: LyXuanTinIndustrialUniversityOfHoChiMinhCity_1234567890_SafeKey_Security
   expiration: "60000"

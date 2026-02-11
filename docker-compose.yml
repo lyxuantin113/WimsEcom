@@ -11,11 +11,14 @@ services:
       - redis
     environment:
       - TZ=Asia/Ho_Chi_Minh
+      - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/wims_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_SSL_ENABLED=false
+      - SPRING_DATA_REDIS_PASSWORD=
     networks:
       - wims-network
 
