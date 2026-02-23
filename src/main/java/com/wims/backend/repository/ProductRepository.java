@@ -10,7 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.QueryHints;
 
 @Repository // Đánh dấu đây là Bean giao tiếp DB
 public interface ProductRepository extends
@@ -22,6 +26,11 @@ public interface ProductRepository extends
 
     // Related Products
     Page<Product> findByCategoryIdAndIdNot(Long categoryId, Long excludedId, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({ @jakarta.persistence.QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000") })
+    @Query("SELECT p FROM Product p WHERE p.id IN :ids")
+    List<Product> findAllByIdWithLock(@Param("ids") Iterable<Long> ids);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE YEAR(p.createdAt) = :year")
     long countProductByYear(@Param("year") int year);

@@ -8,12 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder; // Khoan quan tâm cái này vội
 import org.springframework.stereotype.Component;
-import org.springframework.context.annotation.Bean;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.springframework.context.annotation.Profile;
 
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 

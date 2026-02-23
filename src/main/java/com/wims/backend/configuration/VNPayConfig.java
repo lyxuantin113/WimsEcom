@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -103,7 +102,8 @@ public class VNPayConfig {
             if ((fieldValue != null) && (!fieldValue.isEmpty())) {
                 sb.append(fieldName);
                 sb.append("=");
-                // ⚠️ QUAN TRỌNG: Phải Encode dữ liệu (ví dụ: dấu cách -> %20) thì mới khớp Hash của VNPay
+                // ⚠️ QUAN TRỌNG: Phải Encode dữ liệu (ví dụ: dấu cách -> %20) thì mới khớp Hash
+                // của VNPay
                 sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
             if (itr.hasNext()) {

@@ -21,10 +21,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
+
 @Configuration
+@Profile("!test")
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -46,8 +48,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                )
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
@@ -57,12 +58,13 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/static/**",
-                                "/uploads/**"
-                        ).permitAll()
+                                "/uploads/**")
+                        .permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
 
-                        // 1. Cho lấy danh sách để hiển thị nhưng search chỉ lưu lịch sử của người đã login
+                        // 1. Cho lấy danh sách để hiển thị nhưng search chỉ lưu lịch sử của người đã
+                        // login
                         .requestMatchers("/api/banners/**").permitAll()
                         .requestMatchers("/api/products/search-history").authenticated()
 
@@ -73,8 +75,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
 
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 // Chèn filter của ta vào trước filter mặc định của Spring
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

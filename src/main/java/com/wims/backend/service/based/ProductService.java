@@ -34,12 +34,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service // Đánh dấu đây là nơi xử lý nghiệp vụ
+@Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProductService {
 
-    // DI: Tiêm Repository vào để dùng
     private final ProductRepository productRepository;
 
     private final ProductMapper productMapper;
@@ -63,11 +62,11 @@ public class ProductService {
             BigDecimal minPrice,
             BigDecimal maxPrice,
             boolean isOutOfStock,
-            Long categoryId
-    ) {
+            Long categoryId) {
         // 1. Tạo đối tượng Pageable
         // Logic: Sắp xếp theo SortBy (Mặc định) giảm dần (Sản phẩm mới nhất lên đầu)
-        // pageable trả về như 1 query Trả về "danh sách các Product" nhưng "có điều kiện"
+        // pageable trả về như 1 query Trả về "danh sách các Product" nhưng "có điều
+        // kiện"
         Sort sort = Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
@@ -95,7 +94,8 @@ public class ProductService {
             spec = spec.and(ProductSpecification.hasCategory(categoryId));
         }
 
-        // 4. Gọi Repository với CẢ HAI tham số: spec (điều kiện WHERE) và pageable (LIMIT/OFFSET)
+        // 4. Gọi Repository với CẢ HAI tham số: spec (điều kiện WHERE) và pageable
+        // (LIMIT/OFFSET)
         Page<Product> productPage = productRepository.findAll(spec, pageable);
 
         // 5. Map dữ liệu (Dùng cách Clean Code ta vừa học)
@@ -144,8 +144,9 @@ public class ProductService {
         });
     }
 
-    // Transaction không dùng cho private nhưng đã có TransactionTemplate nên dùng private được
-    private ProductResponse saveProductToDB(String imageUrl, ProductRequestDTO request){
+    // Transaction không dùng cho private nhưng đã có TransactionTemplate nên dùng
+    // private được
+    private ProductResponse saveProductToDB(String imageUrl, ProductRequestDTO request) {
 
         Product product = productMapper.toProduct(request);
 
@@ -186,7 +187,8 @@ public class ProductService {
 
         String finalNewImageUrl = newImageUrl;
 
-        ProductResponse response = transactionTemplate.execute(status -> updateProductToDB(finalNewImageUrl, product, request));
+        ProductResponse response = transactionTemplate
+                .execute(status -> updateProductToDB(finalNewImageUrl, product, request));
 
         if (hasNewImageUrl && oldImageUrl != null && !oldImageUrl.isEmpty()) {
             try {
@@ -208,7 +210,7 @@ public class ProductService {
         }
 
         // 4. Cập nhật Category nếu có thay đổi
-        if(request.getCategoryId() != null) {
+        if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new AppException(1004, "Danh mục không tồn tại"));
             product.setCategory(category);
@@ -247,8 +249,7 @@ public class ProductService {
         Page<Product> products = productRepository.findByCategoryIdAndIdNot(
                 currentProduct.getCategory().getId(),
                 currentProductId,
-                pageable
-        );
+                pageable);
 
         // 3. Map sang Response
         return products.getContent().stream()

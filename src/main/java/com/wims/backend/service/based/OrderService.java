@@ -13,8 +13,6 @@ import com.wims.backend.event.OrderStatusChangedEvent;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
-import com.wims.backend.security.CustomUserDetails;
-import com.wims.backend.service.feature.NotificationService;
 import com.wims.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -71,8 +69,7 @@ public class OrderService {
     public PageResponse<OrderResponse> getMyOrders(
             int page,
             int size,
-            String sortBy
-    ) {
+            String sortBy) {
 
         Sort sort = Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page - 1, size, sort);
@@ -123,7 +120,7 @@ public class OrderService {
                 .map(CartItemRequest::getProductId)
                 .toList();
 
-        List<Product> products = productRepository.findAllById(productIds);
+        List<Product> products = productRepository.findAllByIdWithLock(productIds);
 
         Map<Long, Product> productMap = products.stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
@@ -142,7 +139,7 @@ public class OrderService {
         List<Long> affectedProductIds = new ArrayList<>();
 
         if (request.getDiscountCode() != null && !request.getDiscountCode().isEmpty()) {
-            Discount discount = discountRepository.findByCodeAndActiveTrue(request.getDiscountCode())
+            Discount discount = discountRepository.findByCodeWithLock(request.getDiscountCode())
                     .orElseThrow(() -> new AppException(1001, "Mã giảm giá không hợp lệ"));
 
             // Gọi service tính toán
@@ -154,7 +151,8 @@ public class OrderService {
             discountAmount = discountCalculationRes.getTotalDiscount();
             affectedProductIds = discountCalculationRes.getAffectedProductIds();
 
-            // Trừ lượt sử dụng (Nên dùng query update atomic để tránh race condition nếu lượt truy cập cao)
+            // Trừ lượt sử dụng (Nên dùng query update atomic để tránh race condition nếu
+            // lượt truy cập cao)
             discount.setUsedCount(discount.getUsedCount() + 1);
             discountRepository.save(discount);
 
@@ -197,7 +195,8 @@ public class OrderService {
 
         // 6. Chốt giá cuối cùng
         finalTotal = rawTotal.subtract(discountAmount);
-        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0)
+            finalTotal = BigDecimal.ZERO;
 
         order.setTotalAmount(finalTotal);
 
@@ -207,8 +206,8 @@ public class OrderService {
         // 8. Xóa giỏ hàng
         Cart cart = cartRepository.findByUserId(user.getId());
         if (cart != null) {
-//            cart.getCartItems().clear();
-//            cartRepository.save(cart);
+            // cart.getCartItems().clear();
+            // cartRepository.save(cart);
 
             // DELETE FROM cart_item WHERE cart_id = ?
             cartItemRepository.deleteAllByCartId(cart.getId());
@@ -271,7 +270,8 @@ public class OrderService {
     public OrderResponse cancelOrder(Long orderId) {
 
         User user = securityUtils.getCurrentUserLogin();
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(1004, "Đơn hàng không tồn tại"));
 
         if (!order.getUser().getUsername().equals(user.getUsername())) {
             throw new AppException(403, "Bạn không có quyền hủy đơn hàng này");
@@ -315,7 +315,8 @@ public class OrderService {
 
         // Check xem status CŨ có phải là đã hủy/trả chưa để tránh cộng 2 lần
         boolean isCancelOrReturn = newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.RETURNED;
-        boolean isAlreadyRestocked = order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.RETURNED;
+        boolean isAlreadyRestocked = order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.RETURNED;
 
         if (isCancelOrReturn && !isAlreadyRestocked) {
             for (OrderDetail detail : order.getOrderDetails()) {
