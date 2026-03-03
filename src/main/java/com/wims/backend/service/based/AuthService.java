@@ -2,8 +2,8 @@ package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.LoginRequest;
 import com.wims.backend.dto.request.RegisterRequest;
-import com.wims.backend.dto.response.LoginResponse;
 import com.wims.backend.dto.response.RegisterResponse;
+import com.wims.backend.dto.response.TokenResponse;
 import com.wims.backend.entity.Role;
 import com.wims.backend.entity.User;
 import com.wims.backend.exception.AppException;
@@ -36,7 +36,7 @@ public class AuthService {
     @Value("${jwt.refresh-expiration}")
     private long refreshTokenExpiration;
 
-    public LoginResponse login(LoginRequest request) {
+    public TokenResponse login(LoginRequest request) {
         // 1. Tìm user trong DB
         User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new AppException(1005, "User không tồn tại"));
@@ -60,15 +60,15 @@ public class AuthService {
                 .findFirst()
                 .orElse("");
 
-        return LoginResponse.builder()
-                .token(accessToken)
+        return TokenResponse.builder()
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .username(user.getUsername())
                 .role(roleName)
                 .build();
     }
 
-    public LoginResponse refreshToken(String refreshToken) {
+    public TokenResponse refreshToken(String refreshToken) {
         // 1. Validate Token
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new AppException(1006, "Refresh token không hợp lệ hoặc đã hết hạn");
@@ -94,8 +94,8 @@ public class AuthService {
                 .findFirst()
                 .orElse("");
 
-        return LoginResponse.builder()
-                .token(newAccessToken)
+        return TokenResponse.builder()
+                .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
                 .username(user.getUsername())
                 .role(roleName)

@@ -80,7 +80,9 @@ class AuthIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000))
                 .andExpect(jsonPath("$.result.token").exists())
-                .andExpect(jsonPath("$.result.refreshToken").exists())
+                .andExpect(jsonPath("$.result.refreshToken").doesNotExist()) // KHÔNG trả về trong body
+                .andExpect(cookie().exists("refreshToken")) // Trả về trong Cookie
+                .andExpect(cookie().httpOnly("refreshToken", true))
                 .andExpect(jsonPath("$.result.username").value("integrationuser"));
     }
 

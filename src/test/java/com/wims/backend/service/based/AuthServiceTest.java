@@ -1,7 +1,7 @@
 package com.wims.backend.service.based;
 
 import com.wims.backend.dto.request.LoginRequest;
-import com.wims.backend.dto.response.LoginResponse;
+import com.wims.backend.dto.response.TokenResponse;
 import com.wims.backend.entity.Role;
 import com.wims.backend.entity.User;
 import com.wims.backend.exception.AppException;
@@ -65,13 +65,14 @@ class AuthServiceTest {
         when(jwtTokenProvider.generateAccessToken("testuser")).thenReturn("access_token");
         when(jwtTokenProvider.generateRefreshToken("testuser")).thenReturn("refresh_token");
 
-        LoginResponse response = authService.login(request);
+        TokenResponse response = authService.login(request);
 
         assertNotNull(response);
-        assertEquals("access_token", response.token());
+        assertEquals("access_token", response.accessToken());
         assertEquals("refresh_token", response.refreshToken());
         assertEquals("testuser", response.username());
-        verify(redisService).save(eq("refresh_token:testuser"), eq("refresh_token"), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(redisService).save(eq("refresh_token:testuser"), eq("refresh_token"), anyLong(),
+                eq(TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -91,10 +92,10 @@ class AuthServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(jwtTokenProvider.generateAccessToken("testuser")).thenReturn("new_access_token");
 
-        LoginResponse response = authService.refreshToken(refreshToken);
+        TokenResponse response = authService.refreshToken(refreshToken);
 
         assertNotNull(response);
-        assertEquals("new_access_token", response.token());
+        assertEquals("new_access_token", response.accessToken());
         assertEquals(refreshToken, response.refreshToken());
     }
 

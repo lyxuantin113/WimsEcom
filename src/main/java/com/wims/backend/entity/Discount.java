@@ -30,7 +30,6 @@ public class Discount {
     @Enumerated(EnumType.STRING)
     private DiscountType type;
 
-    @Column(name = "discount_value")
     private BigDecimal value; // Giá trị (VD: 10 hoặc 50000)
 
     @Enumerated(EnumType.STRING)

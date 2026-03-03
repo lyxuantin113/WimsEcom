@@ -1,5 +1,5 @@
 # Dùng ảnh chứa Maven và JDK 21 để build code
-FROM maven:3.13.0-amazoncorretto-21-al2023 AS build
+FROM maven:3.9.6-amazoncorretto-21-al2023 AS build
 
 # Tạo thư mục làm việc trong container
 WORKDIR /app

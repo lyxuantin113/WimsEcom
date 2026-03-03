@@ -28,6 +28,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BLACKLIST_PREFIX = "blacklist_token:";
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/api/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
@@ -61,7 +67,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception ex) {
-            System.err.println("Could not set user authentication in security context: " + ex.getMessage());
+            System.err.println("JwtAuthenticationFilter Error: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
         // 6. Cho phép request đi tiếp vào Controller (hoặc Filter tiếp theo)
