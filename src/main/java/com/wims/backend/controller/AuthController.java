@@ -25,4 +25,17 @@ public class AuthController {
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest request) {
         return ApiResponse.success(authService.register(request)).build();
     }
+
+    @PostMapping("/refresh")
+    public ApiResponse<LoginResponse> refresh(@RequestParam("refreshToken") String refreshToken) {
+        return ApiResponse.success(authService.refreshToken(refreshToken)).build();
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@RequestHeader("Authorization") String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            authService.logout(token.substring(7));
+        }
+        return ApiResponse.<Void>success(null).message("Logout thành công").build();
+    }
 }

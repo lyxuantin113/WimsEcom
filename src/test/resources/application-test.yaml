@@ -39,7 +39,8 @@ frontend:
   baseurl: "http://localhost:5173"
 
 jwt:
-  secretkey: "mock-secret-key-for-test-needs-to-be-long-enough"
+  secretkey: "mock-secret-key-for-test-needs-to-be-long-enough-and-now-it-is-even-longer-than-before-to-satisfy-hs512-algorithm-minimum-requirements"
   expiration: "60000"
+  refresh-expiration: "1800000"
 
 MAIL_PASSWORD: "mock-password"

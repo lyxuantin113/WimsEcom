@@ -15,22 +15,34 @@ public class JwtTokenProvider {
     private String JWT_SECRET;
 
     @Value("${jwt.expiration}")
-    private long JWT_EXPIRATION;
+    private long ACCESS_TOKEN_EXPIRATION;
+
+    @Value("${jwt.refresh-expiration}")
+    private long REFRESH_TOKEN_EXPIRATION;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
     }
 
-    // TẠO TOKEN TỪ USERNAME
-    public String generateToken(String username) {
+    // TẠO ACCESS TOKEN
+    public String generateAccessToken(String username) {
+        return generateToken(username, ACCESS_TOKEN_EXPIRATION);
+    }
+
+    // TẠO REFRESH TOKEN
+    public String generateRefreshToken(String username) {
+        return generateToken(username, REFRESH_TOKEN_EXPIRATION);
+    }
+
+    private String generateToken(String username, long expiration) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION);
+        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .setSubject(username) // Lưu username vào token
-                .setIssuedAt(now) // Ngày tạo
-                .setExpiration(expiryDate) // Ngày hết hạn
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512) // Ký tên bằng thuật toán HS512
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -44,20 +56,34 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
+    // LẤY NGÀY HẾT HẠN TỪ TOKEN
+    public Date getExpirationFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+    }
+
     // VALIDATE TOKEN
     public boolean validateToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(authToken);
             return true;
         } catch (MalformedJwtException ex) {
-            System.err.println("Invalid JWT token");
+            logError("Invalid JWT token");
         } catch (ExpiredJwtException ex) {
-            System.err.println("Expired JWT token");
+            logError("Expired JWT token");
         } catch (UnsupportedJwtException ex) {
-            System.err.println("Unsupported JWT token");
+            logError("Unsupported JWT token");
         } catch (IllegalArgumentException ex) {
-            System.err.println("JWT claims string is empty.");
+            logError("JWT claims string is empty.");
         }
         return false;
+    }
+
+    private void logError(String message) {
+        System.err.println(message);
     }
 }

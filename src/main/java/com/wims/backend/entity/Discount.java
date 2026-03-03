@@ -30,6 +30,7 @@ public class Discount {
     @Enumerated(EnumType.STRING)
     private DiscountType type;
 
+    @Column(name = "discount_value")
     private BigDecimal value; // Giá trị (VD: 10 hoặc 50000)
 
     @Enumerated(EnumType.STRING)
@@ -40,7 +41,7 @@ public class Discount {
     private String applicableIds;
 
     private Integer usageLimit; // Giới hạn số lượng (VD: 100 mã)
-    private Integer usedCount;  // Đã dùng (VD: 5 mã)
+    private Integer usedCount; // Đã dùng (VD: 5 mã)
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;

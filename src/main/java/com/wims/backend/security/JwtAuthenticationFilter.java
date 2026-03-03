@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.wims.backend.service.infrastructure.RedisService;
+
 import java.io.IOException;
 
 @Component
@@ -21,17 +23,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final RedisService redisService;
+
+    private static final String BLACKLIST_PREFIX = "blacklist_token:";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         try {
             // 1. Lấy JWT từ request (Header: Authorization)
             String jwt = getJwtFromRequest(request);
 
-            // 2. Validate Token
+            // 2. Validate Token & Check Blacklist
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
+
+                // CHECK BLACKLIST
+                if (redisService.hasKey(BLACKLIST_PREFIX + jwt)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
                 // 3. Lấy username từ chuỗi token
                 String username = jwtTokenProvider.getUsernameFromToken(jwt);

@@ -9,6 +9,7 @@ import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.security.JwtTokenProvider;
 import com.wims.backend.security.CustomUserDetailsService;
 import com.wims.backend.service.based.OrderService;
+import com.wims.backend.service.infrastructure.RedisService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,9 @@ public class OrderControllerTest {
 
         @MockBean
         private CustomUserDetailsService customUserDetailsService;
+
+        @MockBean
+        private RedisService redisService;
 
         @MockBean
         private JpaMetamodelMappingContext jpaMappingContext;
