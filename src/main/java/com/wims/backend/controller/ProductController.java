@@ -5,15 +5,13 @@ import com.wims.backend.dto.request.ProductRequestDTO;
 import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.dto.response.ProductResponse;
 import com.wims.backend.entity.User;
-import com.wims.backend.security.CustomUserDetails;
 import com.wims.backend.service.based.ProductService;
-import com.wims.backend.service.feature.SearchHistoryService;
+import com.wims.backend.service.featured.SearchHistoryService;
 import com.wims.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -41,8 +39,7 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) boolean isOutOfStock,
-            @RequestParam(required = false) Long categoryId
-    ) {
+            @RequestParam(required = false) Long categoryId) {
         User user = securityUtils.getCurrentUserLogin();
 
         if (keyword != null && !keyword.trim().isEmpty() && user != null) {
@@ -50,11 +47,10 @@ public class ProductController {
             searchHistoryService.saveSearchHistory(user.getId(), keyword.trim());
         }
 
-        var result = productService.getAllProducts(page, size, sortBy, keyword, minPrice, maxPrice, isOutOfStock, categoryId);
+        var result = productService.getAllProducts(page, size, sortBy, keyword, minPrice, maxPrice, isOutOfStock,
+                categoryId);
 
-        return ApiResponse.<PageResponse<ProductResponse>>builder()
-                .result(result)
-                .build();
+        return ApiResponse.success(result).build();
     }
 
     @GetMapping("/search-history")
@@ -62,23 +58,18 @@ public class ProductController {
         User user = securityUtils.getCurrentUserLogin();
 
         if (user == null) {
-            return ApiResponse.<List<String>>builder()
-                    .result(Collections.emptyList()) // Trả về mảng rỗng []
-                    .build();
+            return ApiResponse.success(Collections.<String>emptyList()).build();
         }
 
         Long userId = user.getId();
 
         // Nếu đã login, mới lấy ID
-        return ApiResponse.<List<String>>builder()
-                .result(searchHistoryService.getSearchHistory(userId))
-                .build();
+        return ApiResponse.success(searchHistoryService.getSearchHistory(userId)).build();
     }
 
     @DeleteMapping("/search-history")
     public ApiResponse<Void> deleteSearchHistory(
-            @RequestParam String keyword
-    ) {
+            @RequestParam String keyword) {
         User user = securityUtils.getCurrentUserLogin();
 
         if (user != null) {
@@ -92,7 +83,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ApiResponse<ProductResponse> getProduct(@PathVariable Long id) {
-        return ApiResponse.<ProductResponse>builder().result(productService.getProductById(id)).build();
+        return ApiResponse.success(productService.getProductById(id)).build();
     }
 
     // API: Tạo mới (POST)
@@ -100,20 +91,16 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ProductResponse> create(
-            @ModelAttribute @Valid ProductRequestDTO request
-    ) {
-        return ApiResponse.<ProductResponse>builder()
-                .result(productService.createProduct(request))
-                .build();
+            @ModelAttribute @Valid ProductRequestDTO request) {
+        return ApiResponse.success(productService.createProduct(request)).build();
     }
 
     // API: Sửa thông tin (PUT)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<ProductResponse> update(@PathVariable Long id, @ModelAttribute @Valid ProductRequestDTO request) {
-        return ApiResponse.<ProductResponse>builder()
-                .result(productService.updateProduct(id, request))
-                .build();
+    public ApiResponse<ProductResponse> update(@PathVariable Long id,
+            @ModelAttribute @Valid ProductRequestDTO request) {
+        return ApiResponse.success(productService.updateProduct(id, request)).build();
     }
 
     // API: Xóa (DELETE)
@@ -121,16 +108,12 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ApiResponse<String> delete(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ApiResponse.<String>builder()
-                .result("Đã xóa thành công sản phẩm")
-                .build();
+        return ApiResponse.success("Đã xóa thành công sản phẩm").build();
     }
 
     // Get Related Product
     @GetMapping("/{id}/related")
     public ApiResponse<List<ProductResponse>> getRelatedProducts(@PathVariable Long id) {
-        return ApiResponse.<List<ProductResponse>>builder()
-                .result(productService.getRelatedProducts(id))
-                .build();
+        return ApiResponse.success(productService.getRelatedProducts(id)).build();
     }
 }

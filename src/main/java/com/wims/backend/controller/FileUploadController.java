@@ -1,6 +1,6 @@
 package com.wims.backend.controller;
 
-import com.wims.backend.service.feature.FileStorageService;
+import com.wims.backend.service.featured.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

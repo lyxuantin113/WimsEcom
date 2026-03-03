@@ -2,21 +2,23 @@ package com.wims.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
-import lombok.Data;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL) // Nếu field nào null thì bỏ qua, không trả về
-public class ApiResponse<T> {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record ApiResponse<T>(
+        int code,
+        String message,
+        T result) {
+    public ApiResponse {
+        if (code == 0)
+            code = 1000;
+    }
 
-    @Builder.Default
-    private int code = 1000; // Mặc định 1000 là Thành công (Quy ước riêng của dự án)
+    public static <T> ApiResponseBuilder<T> success(T result) {
+        return ApiResponse.<T>builder().code(1000).message("Success").result(result);
+    }
 
-    private String message;  // Thông báo lỗi hoặc thành công
-
-    private T result;        // Dữ liệu trả về (Product, User, List...)
+    public static <T> ApiResponseBuilder<T> error(int code, String message) {
+        return ApiResponse.<T>builder().code(code).message(message);
+    }
 }

@@ -39,116 +39,107 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 public class OrderControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockBean
-    private OrderService orderService;
+        @MockBean
+        private OrderService orderService;
 
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+        @MockBean
+        private JwtTokenProvider jwtTokenProvider;
 
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    @MockBean
-    private JpaMetamodelMappingContext jpaMappingContext;
+        @MockBean
+        private JpaMetamodelMappingContext jpaMappingContext;
 
-    @MockBean(name = "auditorProvider")
-    private AuditorAware<String> auditorProvider;
+        @MockBean(name = "auditorProvider")
+        private AuditorAware<String> auditorProvider;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    private OrderResponse mockOrderResponse;
-    private OrderCreationRequest mockRequest;
+        private OrderResponse mockOrderResponse;
+        private OrderCreationRequest mockRequest;
 
-    @BeforeEach
-    void setUp() {
-        mockOrderResponse = new OrderResponse();
-        mockOrderResponse.setId(100L);
-        mockOrderResponse.setCustomerName("Test Customer");
-        mockOrderResponse.setTotalAmount(BigDecimal.valueOf(5000));
-        mockOrderResponse.setStatus("PENDING_CONFIRMATION");
+        @BeforeEach
+        void setUp() {
+                mockOrderResponse = OrderResponse.builder()
+                                .id(100L)
+                                .customerName("Test Customer")
+                                .totalAmount(BigDecimal.valueOf(5000))
+                                .status("PENDING_CONFIRMATION")
+                                .build();
 
-        mockRequest = new OrderCreationRequest();
-        mockRequest.setCustomerName("Test Customer");
-        mockRequest.setPhone("0987654321");
-        mockRequest.setAddress("Hanoi");
-        mockRequest.setPaymentMethod("COD");
+                CartItemRequest item = new CartItemRequest(1L, 2);
+                mockRequest = new OrderCreationRequest(
+                                "Test Customer",
+                                "0987654321",
+                                "Hanoi",
+                                "COD",
+                                List.of(item),
+                                null);
+        }
 
-        CartItemRequest item = new CartItemRequest();
-        item.setProductId(1L);
-        item.setQuantity(2);
-        mockRequest.setItems(List.of(item));
-    }
+        @Test
+        @DisplayName("Tạo đơn hàng thành công")
+        @WithMockUser(username = "testuser", roles = { "USER" })
+        void createOrder_Success() throws Exception {
+                Mockito.when(orderService.createOrder(any(OrderCreationRequest.class))).thenReturn(mockOrderResponse);
 
-    @Test
-    @DisplayName("Tạo đơn hàng thành công")
-    @WithMockUser(username = "testuser", roles = { "USER" })
-    void createOrder_Success() throws Exception {
-        Mockito.when(orderService.createOrder(any(OrderCreationRequest.class))).thenReturn(mockOrderResponse);
+                String content = objectMapper.writeValueAsString(mockRequest);
 
-        String content = objectMapper.writeValueAsString(mockRequest);
+                mockMvc.perform(post("/api/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(content))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.code").value(1000))
+                                .andExpect(jsonPath("$.result.id").value(100))
+                                .andExpect(jsonPath("$.result.customerName").value("Test Customer"));
+        }
 
-        mockMvc.perform(post("/api/orders")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(content))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.result.id").value(100))
-                .andExpect(jsonPath("$.result.customerName").value("Test Customer"));
-    }
+        @Test
+        @DisplayName("Lấy danh sách đơn hàng của tôi thành công")
+        @WithMockUser(username = "testuser", roles = { "USER" })
+        void getMyOrders_Success() throws Exception {
+                PageResponse<OrderResponse> pageResponse = PageResponse.<OrderResponse>builder()
+                                .currentPage(1)
+                                .pageSize(10)
+                                .totalElements(1)
+                                .totalPages(1)
+                                .data(List.of(mockOrderResponse))
+                                .build();
 
-    @Test
-    @DisplayName("Lấy danh sách đơn hàng của tôi thành công")
-    @WithMockUser(username = "testuser", roles = { "USER" })
-    void getMyOrders_Success() throws Exception {
-        PageResponse<OrderResponse> pageResponse = PageResponse.<OrderResponse>builder()
-                .currentPage(1)
-                .pageSize(10)
-                .totalElements(1)
-                .totalPages(1)
-                .data(List.of(mockOrderResponse))
-                .build();
+                Mockito.when(orderService.getMyOrders(anyInt(), anyInt(), anyString())).thenReturn(pageResponse);
 
-        Mockito.when(orderService.getMyOrders(anyInt(), anyInt(), anyString())).thenReturn(pageResponse);
+                mockMvc.perform(get("/api/orders/my-orders")
+                                .param("page", "1")
+                                .param("size", "10")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.code").value(1000))
+                                .andExpect(jsonPath("$.result.data[0].id").value(100));
+        }
 
-        mockMvc.perform(get("/api/orders/my-orders")
-                .param("page", "1")
-                .param("size", "10")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.result.data[0].id").value(100));
-    }
+        @Test
+        @DisplayName("Cập nhật trạng thái đơn hàng thành công")
+        @WithMockUser(username = "admin", roles = { "ADMIN" })
+        void updateStatus_Success() throws Exception {
+                OrderResponse updatedResponse = OrderResponse.builder()
+                                .id(100L)
+                                .customerName("Test Customer")
+                                .totalAmount(BigDecimal.valueOf(5000))
+                                .status("COMPLETED")
+                                .build();
 
-    @Test
-    @DisplayName("Lấy toàn bộ đơn hàng - Thất bại khi không phải ADMIN")
-    @WithMockUser(username = "testuser", roles = { "USER" })
-    void getAllOrders_FailIfNotAdmin() throws Exception {
-        // NOTE: Our TestSecurityConfig disables authorization to avoid filtering
-        // issues.
-        // Wait, PreAuthorize runs on method level and TestSecurityConfig disables
-        // AbstractHttpConfigurer!
-        // But @EnableMethodSecurity is in SecurityConfig! Since we use @WebMvcTest, the
-        // full SecurityConfig isn't loaded!
-        // For the sake of this mock test, bypassing this specific security test if
-        // method security isn't loaded or mocking it successfully.
-    }
+                Mockito.when(orderService.updateOrderStatus(eq(100L), eq("COMPLETED"))).thenReturn(updatedResponse);
 
-    @Test
-    @DisplayName("Cập nhật trạng thái đơn hàng thành công")
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
-    void updateStatus_Success() throws Exception {
-        mockOrderResponse.setStatus("COMPLETED");
-        Mockito.when(orderService.updateOrderStatus(eq(100L), eq("COMPLETED"))).thenReturn(mockOrderResponse);
-
-        mockMvc.perform(put("/api/orders/100/status")
-                .param("status", "COMPLETED")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.result.status").value("COMPLETED"));
-    }
+                mockMvc.perform(put("/api/orders/100/status")
+                                .param("status", "COMPLETED")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.code").value(1000))
+                                .andExpect(jsonPath("$.result.status").value("COMPLETED"));
+        }
 }

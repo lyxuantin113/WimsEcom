@@ -18,15 +18,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
-        return ApiResponse.<LoginResponse>builder()
-                .result(authService.login(request))
-                .build();
+        return ApiResponse.success(authService.login(request)).build();
     }
 
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest request) {
-        return ApiResponse.<RegisterResponse>builder()
-                .result(authService.register(request))
-                .build();
+        return ApiResponse.success(authService.register(request)).build();
     }
 }

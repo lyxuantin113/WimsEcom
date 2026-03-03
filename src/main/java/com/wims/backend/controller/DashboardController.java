@@ -21,12 +21,9 @@ public class DashboardController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<DashboardResponse> getStats(
-            @RequestParam(required = false) Integer year
-    ) {
+            @RequestParam(required = false) Integer year) {
         int selectedYear = (year == null) ? LocalDate.now().getYear() : year;
 
-        return ApiResponse.<DashboardResponse>builder()
-                .result(dashboardService.getStats(selectedYear))
-                .build();
+        return ApiResponse.success(dashboardService.getStats(selectedYear)).build();
     }
 }

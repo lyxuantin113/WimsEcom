@@ -116,16 +116,14 @@ public class OrderServiceConcurrencyTest {
         AtomicInteger failCount = new AtomicInteger(0);
 
         // 10 người cùng đặt 1 sản phẩm, mua số lượng = 1
-        OrderCreationRequest request = new OrderCreationRequest();
-        request.setCustomerName("Xuan Tin");
-        request.setPhone("0123456789");
-        request.setAddress("HCM");
-        request.setPaymentMethod("COD");
-
-        CartItemRequest item = new CartItemRequest();
-        item.setProductId(testProduct.getId());
-        item.setQuantity(1); // Mỗi người mua 1 cái
-        request.setItems(List.of(item));
+        CartItemRequest item = new CartItemRequest(testProduct.getId(), 1);
+        OrderCreationRequest request = new OrderCreationRequest(
+                "Xuan Tin",
+                "0123456789",
+                "HCM",
+                "COD",
+                List.of(item),
+                null);
 
         // Act
         for (int i = 0; i < threadCount; i++) {

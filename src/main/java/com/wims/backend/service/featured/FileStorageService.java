@@ -1,4 +1,4 @@
-package com.wims.backend.service.feature;
+package com.wims.backend.service.featured;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -18,8 +18,7 @@ public class FileStorageService {
     public String uploadImage(MultipartFile file) throws IOException {
         // 1. Upload file lên Cloudinary
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "folder", "wims_product_images"
-        ));
+                "folder", "wims_product_images"));
 
         // 2. Lấy đường dẫn ảnh (URL) trả về
         return uploadResult.get("secure_url").toString();
@@ -42,7 +41,8 @@ public class FileStorageService {
         try {
             // Cắt chuỗi dựa vào folder name "wims_product_images"
             int startIndex = url.indexOf("wims_product_images");
-            if (startIndex == -1) return null;
+            if (startIndex == -1)
+                return null;
 
             // Lấy phần đuôi: wims_product_images/abc.png
             String publicIdWithExtension = url.substring(startIndex);

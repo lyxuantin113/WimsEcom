@@ -62,7 +62,7 @@ public class CategoryService {
 
         // 2. Cập nhật thông tin (Dùng Mapper update hoặc Set thủ công)
         // Cách 1: Set thủ công
-        category.setName(request.getName());
+        category.setName(request.name());
 
         // Cách 2: Nếu dùng MapStruct nâng cao (@MappingTarget)
         // categoryMapper.updateCategory(category, request);
@@ -72,7 +72,8 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new AppException(1001, "Danh mục không tồn tại"));
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(1001, "Danh mục không tồn tại"));
         categoryRepository.delete(category);
     }
 }

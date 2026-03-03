@@ -22,43 +22,32 @@ public class DiscountController {
     // Nhớ cấu hình permitAll() trong SecurityConfig
     @PostMapping("/calculate")
     public ApiResponse<DiscountCalculationResponse> calculateDiscount(@RequestBody DiscountCalculationRequest request) {
-        DiscountCalculationResponse discountCalculationRes = discountService.calculateDiscount(request);
-        return ApiResponse.<DiscountCalculationResponse>builder()
-                .result(discountCalculationRes)
-                .build();
+        return ApiResponse.success(discountService.calculateDiscount(request)).build();
     }
 
     // 1. Lấy danh sách
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')") // Bật lên nếu đã cấu hình security
     public ApiResponse<List<DiscountResponse>> getAllDiscounts() {
-        return ApiResponse.<List<DiscountResponse>>builder()
-                .result(discountService.getAllDiscounts())
-                .build();
+        return ApiResponse.success(discountService.getAllDiscounts()).build();
     }
 
     // 2. Tạo mới
     @PostMapping
     public ApiResponse<DiscountResponse> createDiscount(@RequestBody DiscountRequest request) {
-        return ApiResponse.<DiscountResponse>builder()
-                .result(discountService.createDiscount(request))
-                .build();
+        return ApiResponse.success(discountService.createDiscount(request)).build();
     }
 
     // 3. Cập nhật
     @PutMapping("/{id}")
     public ApiResponse<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequest request) {
-        return ApiResponse.<DiscountResponse>builder()
-                .result(discountService.updateDiscount(id, request))
-                .build();
+        return ApiResponse.success(discountService.updateDiscount(id, request)).build();
     }
 
     // 4. Xóa
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteDiscount(@PathVariable Long id) {
         discountService.deleteDiscount(id);
-        return ApiResponse.<String>builder()
-                .result("Đã xóa mã giảm giá thành công")
-                .build();
+        return ApiResponse.success("Đã xóa mã giảm giá thành công").build();
     }
 }

@@ -5,17 +5,13 @@ import com.wims.backend.dto.response.PageResponse;
 import com.wims.backend.dto.response.ProductResponse;
 import com.wims.backend.entity.Category;
 import com.wims.backend.entity.Product;
-import com.wims.backend.entity.User;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.ProductMapper;
 import com.wims.backend.repository.CategoryRepository;
 import com.wims.backend.repository.ProductRepository;
 import com.wims.backend.repository.specification.ProductSpecification;
-import com.wims.backend.security.CustomUserDetails;
-import com.wims.backend.service.feature.FileStorageService;
+import com.wims.backend.service.featured.FileStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -49,8 +45,6 @@ public class ProductService {
 
     // Để xử lý triệt để Self-Invocation
     private final TransactionTemplate transactionTemplate;
-
-    private final CacheManager cacheManager;
 
     // Hàm lấy tất cả sản phẩm
     @Cacheable(value = "product_search")
@@ -119,16 +113,16 @@ public class ProductService {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductResponse createProduct(ProductRequestDTO request) {
-        if (productRepository.findByCode(request.getCode()).isPresent()) {
-            throw new AppException(1004, "Sản phẩm mã " + request.getCode() + " đã tồn tại!");
+        if (productRepository.findByCode(request.code()).isPresent()) {
+            throw new AppException(1004, "Sản phẩm mã " + request.code() + " đã tồn tại!");
         }
 
         // Kiểm tra và lưu file trước khi chạm đến DB
         String imageUrl = null;
 
-        if (request.getFile() != null && !request.getFile().isEmpty()) {
+        if (request.file() != null && !request.file().isEmpty()) {
             try {
-                imageUrl = fileStorageService.uploadImage(request.getFile());
+                imageUrl = fileStorageService.uploadImage(request.file());
             } catch (IOException e) {
                 throw new AppException(8888, "Lỗi upload ảnh: " + e.getMessage());
             }
@@ -150,7 +144,7 @@ public class ProductService {
 
         Product product = productMapper.toProduct(request);
 
-        Category category = categoryRepository.findById(request.getCategoryId())
+        Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new AppException(1004, "Danh mục không tồn tại"));
 
         // Gán danh mục cho sản phẩm
@@ -174,11 +168,11 @@ public class ProductService {
         String oldImageUrl = product.getImage();
 
         String newImageUrl = null;
-        boolean hasNewImageUrl = request.getFile() != null && !request.getFile().isEmpty();
+        boolean hasNewImageUrl = request.file() != null && !request.file().isEmpty();
 
         if (hasNewImageUrl) {
             try {
-                newImageUrl = fileStorageService.uploadImage(request.getFile());
+                newImageUrl = fileStorageService.uploadImage(request.file());
 
             } catch (IOException e) {
                 throw new AppException(9999, "Lỗi upload ảnh mới: " + e.getMessage());
@@ -210,8 +204,8 @@ public class ProductService {
         }
 
         // 4. Cập nhật Category nếu có thay đổi
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
+        if (request.categoryId() != null) {
+            Category category = categoryRepository.findById(request.categoryId())
                     .orElseThrow(() -> new AppException(1004, "Danh mục không tồn tại"));
             product.setCategory(category);
         }

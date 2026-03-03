@@ -6,7 +6,6 @@ import com.wims.backend.dto.request.OrderCreationRequest;
 import com.wims.backend.dto.response.DiscountCalculationResponse;
 import com.wims.backend.dto.response.OrderResponse;
 import com.wims.backend.entity.*;
-import com.wims.backend.enums.OrderStatus;
 import com.wims.backend.event.OrderCreatedEvent;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
@@ -16,13 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,16 +74,15 @@ class OrderServiceTest {
         mockProduct.setPrice(BigDecimal.valueOf(2000));
         mockProduct.setStockQuantity(10); // Đủ hàng
 
-        mockItemRequest = new CartItemRequest();
-        mockItemRequest.setProductId(100L);
-        mockItemRequest.setQuantity(2);
+        mockItemRequest = new CartItemRequest(100L, 2);
 
-        mockRequest = new OrderCreationRequest();
-        mockRequest.setCustomerName("Xuan Tin");
-        mockRequest.setPhone("0123456789");
-        mockRequest.setAddress("HCM");
-        mockRequest.setPaymentMethod("COD");
-        mockRequest.setItems(List.of(mockItemRequest));
+        mockRequest = new OrderCreationRequest(
+                "Xuan Tin",
+                "0123456789",
+                "HCM",
+                "COD",
+                List.of(mockItemRequest),
+                null);
 
         mockDiscount = new Discount();
         mockDiscount.setCode("TET2026");
@@ -106,9 +102,10 @@ class OrderServiceTest {
 
         when(orderRepository.save(any(Order.class))).thenReturn(mockOrderSaved);
 
-        OrderResponse responseMock = new OrderResponse();
-        responseMock.setId(999L);
-        responseMock.setTotalAmount(BigDecimal.valueOf(4000));
+        OrderResponse responseMock = OrderResponse.builder()
+                .id(999L)
+                .totalAmount(BigDecimal.valueOf(4000))
+                .build();
         when(orderMapper.toOrderResponse(mockOrderSaved)).thenReturn(responseMock);
 
         // Giả lập giỏ hàng để xóa
@@ -121,8 +118,8 @@ class OrderServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(999L, result.getId());
-        assertEquals(BigDecimal.valueOf(4000), result.getTotalAmount());
+        assertEquals(999L, result.id());
+        assertEquals(BigDecimal.valueOf(4000), result.totalAmount());
 
         // Kiểm tra trừ kho
         assertEquals(8, mockProduct.getStockQuantity());
@@ -159,15 +156,22 @@ class OrderServiceTest {
     @DisplayName("Tạo đơn hàng thành công CÓ áp mã giảm giá")
     void createOrder_Success_WithDiscount() {
         // Arrange
-        mockRequest.setDiscountCode("TET2026");
+        mockRequest = new OrderCreationRequest(
+                "Xuan Tin",
+                "0123456789",
+                "HCM",
+                "COD",
+                List.of(mockItemRequest),
+                "TET2026");
         when(securityUtils.getCurrentUserLogin()).thenReturn(mockUser);
         when(productRepository.findAllByIdWithLock(anyList())).thenReturn(List.of(mockProduct));
         when(discountRepository.findByCodeWithLock("TET2026")).thenReturn(Optional.of(mockDiscount));
 
         // Giả lập discount service trả về kết quả giảm 500
-        DiscountCalculationResponse calcResponse = new DiscountCalculationResponse();
-        calcResponse.setTotalDiscount(BigDecimal.valueOf(500));
-        calcResponse.setAffectedProductIds(List.of(100L));
+        DiscountCalculationResponse calcResponse = DiscountCalculationResponse.builder()
+                .totalDiscount(BigDecimal.valueOf(500))
+                .affectedProductIds(List.of(100L))
+                .build();
         when(discountService.calculateDiscount(any(DiscountCalculationRequest.class))).thenReturn(calcResponse);
 
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
@@ -176,10 +180,11 @@ class OrderServiceTest {
             return saved;
         });
 
-        OrderResponse responseMock = new OrderResponse();
-        responseMock.setId(999L);
-        responseMock.setTotalAmount(BigDecimal.valueOf(3500)); // 4000 - 500 = 3500
-        responseMock.setDiscountAmount(BigDecimal.valueOf(500));
+        OrderResponse responseMock = OrderResponse.builder()
+                .id(999L)
+                .totalAmount(BigDecimal.valueOf(3500))
+                .discountAmount(BigDecimal.valueOf(500))
+                .build();
         when(orderMapper.toOrderResponse(any(Order.class))).thenReturn(responseMock);
 
         // Act
@@ -187,8 +192,8 @@ class OrderServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(BigDecimal.valueOf(3500), result.getTotalAmount());
-        assertEquals(BigDecimal.valueOf(500), result.getDiscountAmount());
+        assertEquals(BigDecimal.valueOf(3500), result.totalAmount());
+        assertEquals(BigDecimal.valueOf(500), result.discountAmount());
 
         // Đảm bảo voucher đã được tăng useCount
         verify(discountRepository, times(1)).save(mockDiscount);

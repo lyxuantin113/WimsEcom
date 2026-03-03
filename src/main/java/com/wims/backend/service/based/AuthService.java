@@ -28,11 +28,11 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         // 1. Tìm user trong DB
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new AppException(1005, "User không tồn tại"));
 
         // 2. Kiểm tra mật khẩu (So sánh mật khẩu gửi lên vs mật khẩu mã hóa trong DB)
-        boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        boolean matches = passwordEncoder.matches(request.password(), user.getPassword());
         if (!matches) {
             throw new AppException(986, "Mật khẩu không đúng");
         }
@@ -54,26 +54,27 @@ public class AuthService {
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userRepository.existsByUsername(request.username())) {
             throw new AppException(9999, "Tên người dùng đã tồn tại, vui lòng chọn tên khác!");
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullname());
+        user.setUsername(request.username());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setEmail(request.email());
+        user.setFullName(request.fullname());
 
-        Role userRole = roleRepository.findByName("USER").orElseThrow(() -> new AppException(1004, "Role không tồn tại!"));
+        Role userRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new AppException(1004, "Role không tồn tại!"));
 
         user.setRoles(Set.of(userRole));
 
         userRepository.save(user);
 
         return RegisterResponse.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .fullname(request.getFullname())
+                .username(request.username())
+                .email(request.email())
+                .fullname(request.fullname())
                 .build();
     }
 }

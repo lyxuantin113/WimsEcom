@@ -4,11 +4,9 @@ import com.wims.backend.dto.request.OrderCreationRequest;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.response.OrderResponse;
 import com.wims.backend.dto.response.PageResponse;
-import com.wims.backend.security.CustomUserDetails;
 import com.wims.backend.service.based.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,69 +14,52 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
+        private final OrderService orderService;
 
-    @PostMapping
-    public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreationRequest request) {
-        return ApiResponse.<OrderResponse>builder()
-                .result(orderService.createOrder(request))
-                .build();
-    }
+        @PostMapping
+        public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreationRequest request) {
+                return ApiResponse.success(orderService.createOrder(request)).build();
+        }
 
-    @GetMapping("/my-orders")
-    public ApiResponse<PageResponse<OrderResponse>> getMyOrders(
-            @RequestParam(defaultValue = "1", required = false) int page,
-            @RequestParam(defaultValue = "10", required = false) int size,
-            @RequestParam(defaultValue = "createdAt", required = false) String sortBy
-    ) {
-        return ApiResponse.<PageResponse<OrderResponse>>builder()
-                .result(orderService.getMyOrders(page,size,sortBy))
-                .build();
-    }
+        @GetMapping("/my-orders")
+        public ApiResponse<PageResponse<OrderResponse>> getMyOrders(
+                        @RequestParam(defaultValue = "1", required = false) int page,
+                        @RequestParam(defaultValue = "10", required = false) int size,
+                        @RequestParam(defaultValue = "createdAt", required = false) String sortBy) {
+                return ApiResponse.success(orderService.getMyOrders(page, size, sortBy)).build();
+        }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')") // <--- CHỐT CHẶN BẢO VỆ
-    public ApiResponse<PageResponse<OrderResponse>> getAllOrders(
-            @RequestParam(defaultValue = "1", required = false) int page,
-            @RequestParam(defaultValue = "10", required = false) int size,
-            @RequestParam(defaultValue = "createdAt", required = false) String sortBy
-    ) {
-        return ApiResponse.<PageResponse<OrderResponse>>builder()
-                .result(orderService.getAllOrders(page, size, sortBy))
-                .build();
-    }
+        @GetMapping
+        @PreAuthorize("hasRole('ADMIN')")
+        public ApiResponse<PageResponse<OrderResponse>> getAllOrders(
+                        @RequestParam(defaultValue = "1", required = false) int page,
+                        @RequestParam(defaultValue = "10", required = false) int size,
+                        @RequestParam(defaultValue = "createdAt", required = false) String sortBy) {
+                return ApiResponse.success(orderService.getAllOrders(page, size, sortBy)).build();
+        }
 
-    @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<OrderResponse> updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status // Gửi status qua Query Param cho gọn
-    ) {
-        return ApiResponse.<OrderResponse>builder()
-                .result(orderService.updateOrderStatus(id, status))
-                .build();
-    }
+        @PutMapping("/{id}/status")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ApiResponse<OrderResponse> updateStatus(
+                        @PathVariable Long id,
+                        @RequestParam String status) {
+                return ApiResponse.success(orderService.updateOrderStatus(id, status)).build();
+        }
 
-    // GET: http://localhost:8080/api/orders/{id}
-    @GetMapping("/{id}")
-    public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
-        return ApiResponse.<OrderResponse>builder()
-                .result(orderService.getOrderById(id))
-                .build();
-    }
+        // GET: http://localhost:8080/api/orders/{id}
+        @GetMapping("/{id}")
+        public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
+                return ApiResponse.success(orderService.getOrderById(id)).build();
+        }
 
-    @PutMapping("/{id}/cancel")
-    public ApiResponse<OrderResponse> cancelOrder(@PathVariable Long id) {
-        return ApiResponse.<OrderResponse>builder()
-                .result(orderService.cancelOrder(id))
-                .build();
-    }
+        @PutMapping("/{id}/cancel")
+        public ApiResponse<OrderResponse> cancelOrder(@PathVariable Long id) {
+                return ApiResponse.success(orderService.cancelOrder(id)).build();
+        }
 
-    @PutMapping("/{id}/return")
-    public ApiResponse<OrderResponse> requestReturn(@PathVariable Long id) {
-        return ApiResponse.<OrderResponse>builder()
-                .result(orderService.requestReturn(id))
-                .build();
-    }
+        @PutMapping("/{id}/return")
+        public ApiResponse<OrderResponse> requestReturn(@PathVariable Long id) {
+                return ApiResponse.success(orderService.requestReturn(id)).build();
+        }
 
 }

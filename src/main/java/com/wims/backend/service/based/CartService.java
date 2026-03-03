@@ -11,7 +11,6 @@ import com.wims.backend.exception.AppException;
 import com.wims.backend.repository.CartItemRepository;
 import com.wims.backend.repository.CartRepository;
 import com.wims.backend.repository.ProductRepository;
-import com.wims.backend.repository.UserRepository;
 import com.wims.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -53,14 +52,14 @@ public class CartService {
         User user = securityUtils.getCurrentUserLogin();
 
         // 2. Tìm Product
-        Product product = productRepository.findById(request.getProductId())
+        Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new AppException(1004, "Sản phẩm không tồn tại"));
 
         // 3. Lấy Cart
         Cart cart = getOrCreateCart(user);
 
         // A. Kiểm tra số lượng âm (Validation)
-        if (request.getQuantity() <= 0) {
+        if (request.quantity() <= 0) {
             throw new AppException(1015, "Số lượng sản phẩm phải lớn hơn 0");
         }
 
@@ -68,13 +67,14 @@ public class CartService {
         int currentQuantityInCart = 0;
 
         // Tìm xem sản phẩm đã có trong giỏ chưa để lấy số lượng cũ
-        Optional<CartItem> existingItemCheck = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
+        Optional<CartItem> existingItemCheck = cartItemRepository.findByCartIdAndProductId(cart.getId(),
+                product.getId());
 
         if (existingItemCheck.isPresent()) {
             currentQuantityInCart = existingItemCheck.get().getQuantity();
         }
 
-        int totalRequestedQuantity = currentQuantityInCart + request.getQuantity();
+        int totalRequestedQuantity = currentQuantityInCart + request.quantity();
 
         // C. Kiểm tra tồn kho
         if (totalRequestedQuantity > product.getStockQuantity()) {
@@ -93,7 +93,7 @@ public class CartService {
             CartItem newItem = CartItem.builder()
                     .product(product)
                     .cart(cart)
-                    .quantity(request.getQuantity())
+                    .quantity(request.quantity())
                     .build();
             cart.getCartItems().add(newItem);
         }
@@ -149,15 +149,18 @@ public class CartService {
         // 3. Xóa item khỏi List của Cha (Lúc này Memory đã sạch)
         cart.removeCartItem(item);
 
-        // 4. Lưu lại Cha -> Nhờ orphanRemoval=true, Hibernate sẽ tự bắn lệnh DELETE xuống DB
+        // 4. Lưu lại Cha -> Nhờ orphanRemoval=true, Hibernate sẽ tự bắn lệnh DELETE
+        // xuống DB
         cartRepository.save(cart);
 
-        // 5. Trả về Cart (Lúc này Cart trong memory đã mất item đó rồi, nên Response sẽ đúng)
+        // 5. Trả về Cart (Lúc này Cart trong memory đã mất item đó rồi, nên Response sẽ
+        // đúng)
         return toCartResponse(cart);
     }
 
     // KHÔNG RECOMMEND - NÊN XÓA RIÊNG Ở HÀM KHÁC MAPPER
-    // Mapper để xóa các Item (Product) đang trong giỏ mà Item (Product) đó bị Soft Delete
+    // Mapper để xóa các Item (Product) đang trong giỏ mà Item (Product) đó bị Soft
+    // Delete
     // Tránh lôix 400 - gọi tính toán dù đang null
     private CartResponse toCartResponse(Cart cart) {
         List<CartItemResponse> itemResponses = new ArrayList<>();

@@ -1,4 +1,4 @@
-package com.wims.backend.service.feature;
+package com.wims.backend.service.payment;
 
 import com.wims.backend.configuration.VNPayConfig;
 import com.wims.backend.dto.ApiResponse;
@@ -29,7 +29,8 @@ public class VNPayService {
 
     public String createPaymentUrl(long orderId, String ipAddress) {
 
-        // 1. Lấy user hiện tại để bảo mật (chỉ chủ đơn hàng mới được tạo link thanh toán lại)
+        // 1. Lấy user hiện tại để bảo mật (chỉ chủ đơn hàng mới được tạo link thanh
+        // toán lại)
         User user = securityUtils.getCurrentUserLogin();
         String username = user.getUsername();
 
@@ -164,15 +165,13 @@ public class VNPayService {
                         order.setPaymentTime(LocalDateTime.now());
                         orderRepository.save(order);
 
-                        return ApiResponse.<VNPayResponse>builder()
-                                .code(1000)
+                        return ApiResponse.success(VNPayResponse.builder()
+                                .transactionId(transactionId)
+                                .orderId(orderIdStr)
+                                .paymentTime(paymentTime)
+                                .totalPrice(totalPrice)
+                                .build())
                                 .message("Thanh toán thành công")
-                                .result(VNPayResponse.builder()
-                                        .transactionId(transactionId)
-                                        .orderId(orderIdStr)
-                                        .paymentTime(paymentTime)
-                                        .totalPrice(totalPrice)
-                                        .build())
                                 .build();
                     } else {
                         return ApiResponse.<VNPayResponse>builder()

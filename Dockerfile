@@ -1,6 +1,5 @@
-# --- GIAI ĐOẠN 1: BUILD ---
-# Dùng ảnh chứa Maven và JDK 17 để build code
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
+# Dùng ảnh chứa Maven và JDK 21 để build code
+FROM maven:3.13.0-amazoncorretto-21-al2023 AS build
 
 # Tạo thư mục làm việc trong container
 WORKDIR /app
@@ -17,9 +16,8 @@ COPY src ./src
 # Build ra file .jar (Skip test để build cho nhanh)
 RUN mvn clean package -DskipTests
 
-# --- GIAI ĐOẠN 2: RUN ---
-# Dùng ảnh chỉ chứa JRE (Java Runtime)
-FROM eclipse-temurin:17-jre-alpine
+# Dùng ảnh chỉ chứa JRE (Java Runtime) hoặc JDK Corretto 21
+FROM amazoncorretto:21-alpine-jdk
 
 # Tạo thư mục làm việc
 WORKDIR /app

@@ -32,7 +32,7 @@ public class DiscountService {
     // Hàm tính toán: Trả về số tiền ĐƯỢC GIẢM (Discount Amount)
     public DiscountCalculationResponse calculateDiscount(DiscountCalculationRequest request) {
         // 1. Tìm Voucher
-        Discount discount = discountRepository.findByCodeAndActiveTrue(request.getCode())
+        Discount discount = discountRepository.findByCodeAndActiveTrue(request.code())
                 .orElseThrow(() -> new AppException(1004, "Mã giảm giá không tồn tại hoặc đã bị khóa"));
 
         // 2. Validate điều kiện cơ bản
@@ -59,8 +59,8 @@ public class DiscountService {
                     .forEach(allowedIds::add);
         }
 
-        List<Long> productIds = request.getItems().stream()
-                .map(CartItemRequest::getProductId)
+        List<Long> productIds = request.items().stream()
+                .map(CartItemRequest::productId)
                 .toList();
 
         List<Product> productList = productRepository.findAllById(productIds);
@@ -69,15 +69,15 @@ public class DiscountService {
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
         // 3. Duyệt qua từng món hàng trong giỏ
-        for (CartItemRequest itemReq : request.getItems()) {
+        for (CartItemRequest itemReq : request.items()) {
             // 🔥 Query DB để lấy giá chuẩn và Category
-            Product product = productMap.get(itemReq.getProductId());
+            Product product = productMap.get(itemReq.productId());
 
             if (product == null) {
-                throw new AppException(1004, "Sản phẩm không tồn tại: " + itemReq.getProductId());
+                throw new AppException(1004, "Sản phẩm không tồn tại: " + itemReq.productId());
             }
 
-            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));
+            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity()));
             totalOrderValue = totalOrderValue.add(lineTotal);
 
             // Check xem món này có được giảm giá không
@@ -85,10 +85,12 @@ public class DiscountService {
             if (discount.getScope() == DiscountScope.GLOBAL) {
                 isEligible = true;
             } else if (discount.getScope() == DiscountScope.SPECIFIC_PRODUCT) {
-                if (allowedIds.contains(product.getId())) isEligible = true;
+                if (allowedIds.contains(product.getId()))
+                    isEligible = true;
             } else if (discount.getScope() == DiscountScope.SPECIFIC_CATEGORY) {
                 // Giả sử Product có quan hệ ManyToOne với Category
-                if (allowedIds.contains(product.getCategory().getId())) isEligible = true;
+                if (allowedIds.contains(product.getCategory().getId()))
+                    isEligible = true;
             }
 
             if (isEligible) {
@@ -105,7 +107,7 @@ public class DiscountService {
         if (eligibleAmount.compareTo(BigDecimal.ZERO) == 0) {
             // Nếu là voucher global thì eligibleAmount chính là totalOrderValue
             // Nếu voucher sản phẩm mà không món nào khớp thì trả về 0
-            if (discount.getScope() != DiscountScope.GLOBAL){
+            if (discount.getScope() != DiscountScope.GLOBAL) {
                 throw new AppException(1009, "Mã này không áp dụng cho sản phẩm nào trong giỏ của bạn");
             }
 
@@ -117,7 +119,8 @@ public class DiscountService {
     }
 
     // Hàm phụ: Tính toán số tiền giảm dựa trên Type (FIXED hay PERCENTAGE)
-    private DiscountCalculationResponse calculateAmountByType(Discount discount, BigDecimal totalOrderValue, BigDecimal baseAmount, List<Long> actualAffectedIds) {
+    private DiscountCalculationResponse calculateAmountByType(Discount discount, BigDecimal totalOrderValue,
+            BigDecimal baseAmount, List<Long> actualAffectedIds) {
         BigDecimal result;
         if (discount.getType() == DiscountType.FIXED_AMOUNT) {
             result = totalOrderValue.compareTo(discount.getValue()) < 0 ? totalOrderValue : discount.getValue();
@@ -130,7 +133,8 @@ public class DiscountService {
             }
         }
 
-        return DiscountCalculationResponse.builder().totalDiscount(result).affectedProductIds(actualAffectedIds).build();
+        return DiscountCalculationResponse.builder().totalDiscount(result).affectedProductIds(actualAffectedIds)
+                .build();
     }
 
     // 1. Lấy tất cả (Admin xem)
@@ -142,12 +146,12 @@ public class DiscountService {
 
     // 2. Tạo mới
     public DiscountResponse createDiscount(DiscountRequest request) {
-        if (discountRepository.existsByCode(request.getCode())) {
+        if (discountRepository.existsByCode(request.code())) {
             throw new AppException(1001, "Mã giảm giá đã tồn tại");
         }
 
         // Validate ngày tháng logic
-        if (request.getEndDate().isBefore(request.getStartDate())) {
+        if (request.endDate().isBefore(request.startDate())) {
             throw new AppException(1002, "Ngày kết thúc phải sau ngày bắt đầu");
         }
 

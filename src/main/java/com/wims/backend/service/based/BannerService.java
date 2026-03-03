@@ -6,7 +6,7 @@ import com.wims.backend.entity.Banner;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.BannerMapper;
 import com.wims.backend.repository.BannerRepository;
-import com.wims.backend.service.feature.FileStorageService;
+import com.wims.backend.service.featured.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +43,9 @@ public class BannerService {
 
         Banner banner = bannerMapper.toBanner(request);
 
-        if (request.getFile() != null && !request.getFile().isEmpty()) {
+        if (request.file() != null && !request.file().isEmpty()) {
             try {
-                String imageUrl = fileStorageService.uploadImage(request.getFile());
+                String imageUrl = fileStorageService.uploadImage(request.file());
                 banner.setImageUrl(imageUrl); // Lưu link vào DB
             } catch (IOException e) {
                 throw new AppException(8888, "Lỗi upload ảnh: " + e.getMessage());
@@ -62,7 +62,7 @@ public class BannerService {
 
         String oldImageUrl = banner.getImageUrl();
 
-        if (request.getFile() != null && !request.getFile().isEmpty()) {
+        if (request.file() != null && !request.file().isEmpty()) {
             try {
                 // A. Xóa ảnh cũ trên Cloud (Nếu có)
                 if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
@@ -70,7 +70,7 @@ public class BannerService {
                 }
 
                 // B. Up ảnh mới
-                String newImageUrl = fileStorageService.uploadImage(request.getFile());
+                String newImageUrl = fileStorageService.uploadImage(request.file());
                 banner.setImageUrl(newImageUrl);
 
             } catch (IOException e) {

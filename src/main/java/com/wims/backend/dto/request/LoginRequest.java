@@ -1,10 +1,9 @@
 package com.wims.backend.dto.request;
 
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
 
-@Data
-public class LoginRequest {
+public record LoginRequest(
+        @NotBlank(message = "Username cannot be blank") String username,
 
-    private String username;
-    private String password;
+        @NotBlank(message = "Password cannot be blank") String password) {
 }

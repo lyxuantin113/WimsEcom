@@ -5,7 +5,8 @@ import com.wims.backend.enums.OrderStatus;
 import com.wims.backend.event.OrderCreatedEvent;
 import com.wims.backend.entity.User;
 import com.wims.backend.event.OrderStatusChangedEvent;
-import com.wims.backend.service.feature.NotificationService;
+import com.wims.backend.service.featured.NotificationService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -70,7 +71,8 @@ public class OrderNotificationListener {
     }
 
     private String getStatusInVietnamese(OrderStatus status) {
-        if (status == null) return "Trạng thái không xác định";
+        if (status == null)
+            return "Trạng thái không xác định";
 
         switch (status) {
             case PENDING_PAYMENT:

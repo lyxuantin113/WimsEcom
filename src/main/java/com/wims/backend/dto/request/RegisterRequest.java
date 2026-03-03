@@ -1,12 +1,8 @@
 package com.wims.backend.dto.request;
 
-import lombok.Data;
-
-@Data
-public class RegisterRequest {
-
-    private String username;
-    private String password;
-    private String email;
-    private String fullname;
+public record RegisterRequest(
+        String username,
+        String password,
+        String email,
+        String fullname) {
 }

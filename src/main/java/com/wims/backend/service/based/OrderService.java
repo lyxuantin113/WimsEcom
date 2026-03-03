@@ -100,24 +100,21 @@ public class OrderService {
         User user = securityUtils.getCurrentUserLogin();
 
         // 2. Xác định trạng thái ban đầu
-        OrderStatus initialStatus = "VNPAY".equalsIgnoreCase(request.getPaymentMethod())
+        OrderStatus initialStatus = "VNPAY".equalsIgnoreCase(request.paymentMethod())
                 ? OrderStatus.PENDING_PAYMENT
                 : OrderStatus.PENDING_CONFIRMATION;
 
-        // 3. Khởi tạo Order
-        // Query -> Map tránh N+1
         Order order = Order.builder()
                 .user(user)
-                .customerName(request.getCustomerName())
-                .phone(request.getPhone())
-                .address(request.getAddress())
+                .customerName(request.customerName())
+                .phone(request.phone())
+                .address(request.address())
                 .status(initialStatus)
-                .paymentMethod(request.getPaymentMethod())
-                // Các trường tiền sẽ set sau
+                .paymentMethod(request.paymentMethod())
                 .build();
 
-        List<Long> productIds = request.getItems().stream()
-                .map(CartItemRequest::getProductId)
+        List<Long> productIds = request.items().stream()
+                .map(CartItemRequest::productId)
                 .toList();
 
         List<Product> products = productRepository.findAllByIdWithLock(productIds);
@@ -138,18 +135,17 @@ public class OrderService {
         BigDecimal discountAmount = BigDecimal.ZERO;
         List<Long> affectedProductIds = new ArrayList<>();
 
-        if (request.getDiscountCode() != null && !request.getDiscountCode().isEmpty()) {
-            Discount discount = discountRepository.findByCodeWithLock(request.getDiscountCode())
+        if (request.discountCode() != null && !request.discountCode().isEmpty()) {
+            Discount discount = discountRepository.findByCodeWithLock(request.discountCode())
                     .orElseThrow(() -> new AppException(1001, "Mã giảm giá không hợp lệ"));
 
             // Gọi service tính toán
-            DiscountCalculationRequest discountReq = new DiscountCalculationRequest();
-            discountReq.setCode(request.getDiscountCode());
-            discountReq.setItems(request.getItems());
+            DiscountCalculationRequest discountReq = new DiscountCalculationRequest(request.discountCode(),
+                    request.items());
 
             DiscountCalculationResponse discountCalculationRes = discountService.calculateDiscount(discountReq);
-            discountAmount = discountCalculationRes.getTotalDiscount();
-            affectedProductIds = discountCalculationRes.getAffectedProductIds();
+            discountAmount = discountCalculationRes.totalDiscount();
+            affectedProductIds = discountCalculationRes.affectedProductIds();
 
             // Trừ lượt sử dụng (Nên dùng query update atomic để tránh race condition nếu
             // lượt truy cập cao)
@@ -157,32 +153,32 @@ public class OrderService {
             discountRepository.save(discount);
 
             // Set thông tin voucher vào order
-            order.setDiscountCode(request.getDiscountCode());
+            order.setDiscountCode(request.discountCode());
             order.setDiscountAmount(discountAmount);
         }
 
-        for (CartItemRequest item : request.getItems()) {
-            Product product = productMap.get(item.getProductId());
+        for (CartItemRequest item : request.items()) {
+            Product product = productMap.get(item.productId());
 
             // Check & Trừ kho
-            if (product.getStockQuantity() < item.getQuantity()) {
+            if (product.getStockQuantity() < item.quantity()) {
                 throw new AppException(1005, "Sản phẩm " + product.getName() + " hết hàng");
             }
 
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            product.setStockQuantity(product.getStockQuantity() - item.quantity());
 
             // Tạo Detail
             OrderDetail detail = OrderDetail.builder()
                     .order(order)
                     .product(product)
-                    .quantity(item.getQuantity())
+                    .quantity(item.quantity())
                     .price(product.getPrice())
                     .isDiscounted(affectedProductIds.contains(product.getId()))
                     .build();
             details.add(detail);
 
             // Cộng dồn
-            rawTotal = rawTotal.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            rawTotal = rawTotal.add(product.getPrice().multiply(BigDecimal.valueOf(item.quantity())));
         }
 
         // Dirty Checking

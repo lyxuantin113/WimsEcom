@@ -9,7 +9,8 @@ import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.ProductMapper;
 import com.wims.backend.repository.CategoryRepository;
 import com.wims.backend.repository.ProductRepository;
-import com.wims.backend.service.feature.FileStorageService;
+import com.wims.backend.service.featured.FileStorageService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,12 +75,14 @@ class ProductServiceTest {
         mockProduct.setStockQuantity(10);
         mockProduct.setCategory(mockCategory);
 
-        mockRequest = new ProductRequestDTO();
-        mockRequest.setName("MacBook Pro");
-        mockRequest.setCode("MACB01");
-        mockRequest.setPrice(BigDecimal.valueOf(2000));
-        mockRequest.setStockQuantity(10);
-        mockRequest.setCategoryId(1L);
+        mockRequest = new ProductRequestDTO(
+                "MACB01",
+                "MacBook Pro",
+                null,
+                BigDecimal.valueOf(2000),
+                10,
+                null,
+                1L);
     }
 
     @Test
@@ -89,8 +92,7 @@ class ProductServiceTest {
         Page<Product> productPage = new PageImpl<>(List.of(mockProduct));
         when(productRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(productPage);
 
-        ProductResponse responseMock = new ProductResponse();
-        responseMock.setId(100L);
+        ProductResponse responseMock = ProductResponse.builder().id(100L).build();
         when(productMapper.toProductResponse(any(Product.class))).thenReturn(responseMock);
 
         // Act
@@ -99,8 +101,8 @@ class ProductServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
-        assertEquals(100L, result.getData().get(0).getId());
+        assertEquals(1, result.data().size());
+        assertEquals(100L, result.data().get(0).id());
         verify(productRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
     }
 
@@ -109,9 +111,10 @@ class ProductServiceTest {
     void getProductById_Success() {
         // Arrange
         when(productRepository.findById(anyLong())).thenReturn(Optional.of(mockProduct));
-        ProductResponse responseMock = new ProductResponse();
-        responseMock.setId(100L);
-        responseMock.setName("MacBook Pro");
+        ProductResponse responseMock = ProductResponse.builder()
+                .id(100L)
+                .name("MacBook Pro")
+                .build();
         when(productMapper.toProductResponse(any(Product.class))).thenReturn(responseMock);
 
         // Act
@@ -119,8 +122,8 @@ class ProductServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("MacBook Pro", result.getName());
-        assertEquals(100L, result.getId());
+        assertEquals("MacBook Pro", result.name());
+        assertEquals(100L, result.id());
         verify(productRepository, times(1)).findById(100L);
     }
 
@@ -162,15 +165,24 @@ class ProductServiceTest {
         // Arrange
         MultipartFile mockFile = mock(MultipartFile.class);
         when(mockFile.isEmpty()).thenReturn(false);
-        mockRequest.setFile(mockFile);
+
+        mockRequest = new ProductRequestDTO(
+                "MACB01",
+                "MacBook Pro",
+                null,
+                BigDecimal.valueOf(2000),
+                10,
+                mockFile,
+                1L);
 
         when(productRepository.findByCode(anyString())).thenReturn(Optional.empty());
         when(fileStorageService.uploadImage(any())).thenReturn("http://cloudinary.com/image.jpg");
 
         // Mock TransactionTemplate
-        ProductResponse responseMock = new ProductResponse();
-        responseMock.setId(100L);
-        responseMock.setImage("http://cloudinary.com/image.jpg");
+        ProductResponse responseMock = ProductResponse.builder()
+                .id(100L)
+                .image("http://cloudinary.com/image.jpg")
+                .build();
         when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
             TransactionCallback<ProductResponse> callback = invocation.getArgument(0);
             return callback.doInTransaction(null);
@@ -186,7 +198,7 @@ class ProductServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("http://cloudinary.com/image.jpg", result.getImage());
+        assertEquals("http://cloudinary.com/image.jpg", result.image());
         verify(fileStorageService, times(1)).uploadImage(mockFile);
         verify(productRepository, times(1)).save(any(Product.class));
     }

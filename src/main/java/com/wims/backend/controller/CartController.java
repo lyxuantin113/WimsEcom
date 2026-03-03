@@ -3,13 +3,9 @@ package com.wims.backend.controller;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.request.CartItemRequest;
 import com.wims.backend.dto.response.CartResponse;
-import com.wims.backend.entity.User;
-import com.wims.backend.exception.AppException;
-import com.wims.backend.security.CustomUserDetails;
 import com.wims.backend.service.based.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,45 +13,31 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CartController {
 
-    private final CartService cartService;
+        private final CartService cartService;
 
-    // 1. Xem giỏ hàng của tôi
-    @GetMapping
-    public ApiResponse<CartResponse> getMyCart() {
+        // 1. Xem giỏ hàng của tôi
+        @GetMapping
+        public ApiResponse<CartResponse> getMyCart() {
+                return ApiResponse.success(cartService.getMyCart()).build();
+        }
 
+        @PostMapping
+        public ApiResponse<CartResponse> addToCart(
+                        @RequestBody @Valid CartItemRequest request) {
+                return ApiResponse.success(cartService.addToCart(request)).build();
+        }
 
-        return ApiResponse.<CartResponse>builder()
-                .result(cartService.getMyCart())
-                .build();
-    }
+        // Trong CartController.java
 
-    // 2. Thêm sản phẩm vào giỏ
-    @PostMapping
-    public ApiResponse<CartResponse> addToCart(
-            @RequestBody @Valid CartItemRequest request
-    ) {
-        return ApiResponse.<CartResponse>builder()
-                .result(cartService.addToCart(request))
-                .build();
-    }
+        @PutMapping("/items/{itemId}")
+        public ApiResponse<CartResponse> updateItem(
+                        @PathVariable Long itemId,
+                        @RequestBody CartItemRequest request) {
+                return ApiResponse.success(cartService.updateCartItem(itemId, request.quantity())).build();
+        }
 
-    // Trong CartController.java
-
-    @PutMapping("/items/{itemId}")
-    public ApiResponse<CartResponse> updateItem(
-            @PathVariable Long itemId,
-            @RequestBody CartItemRequest request
-    ) {
-        // request.getQuantity() chứa số lượng mới
-        return ApiResponse.<CartResponse>builder()
-                .result(cartService.updateCartItem(itemId, request.getQuantity()))
-                .build();
-    }
-
-    @DeleteMapping("/items/{itemId}")
-    public ApiResponse<CartResponse> deleteItem(@PathVariable Long itemId) {
-        return ApiResponse.<CartResponse>builder()
-                .result(cartService.removeCartItem(itemId))
-                .build();
-    }
+        @DeleteMapping("/items/{itemId}")
+        public ApiResponse<CartResponse> deleteItem(@PathVariable Long itemId) {
+                return ApiResponse.success(cartService.removeCartItem(itemId)).build();
+        }
 }

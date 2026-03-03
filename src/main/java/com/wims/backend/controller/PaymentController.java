@@ -3,7 +3,7 @@ package com.wims.backend.controller;
 import com.wims.backend.configuration.VNPayConfig;
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.dto.VNPayResponse;
-import com.wims.backend.service.feature.VNPayService;
+import com.wims.backend.service.payment.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,14 +21,11 @@ public class PaymentController {
     @GetMapping("/vnpay")
     public ApiResponse<String> createPayment(
             @RequestParam long orderId,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         // Gọi service
         String vnpayUrl = vnPayService.createPaymentUrl(orderId, VNPayConfig.getIpAddress(request));
 
-        return ApiResponse.<String>builder()
-                .result(vnpayUrl)
-                .build();
+        return ApiResponse.success(vnpayUrl).build();
     }
 
     @GetMapping("/vnpay-callback")

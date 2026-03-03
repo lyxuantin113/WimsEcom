@@ -18,36 +18,28 @@ public class CategoryController {
 
     @PostMapping
     public ApiResponse<CategoryResponse> create(@RequestBody @Valid CategoryRequestDTO request) {
-        return ApiResponse.<CategoryResponse>builder()
-                .result(categoryService.createCategory(request))
-                .build();
+        return ApiResponse.success(categoryService.createCategory(request)).build();
     }
 
     @GetMapping
     public ApiResponse<PageResponse<CategoryResponse>> getAll(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "name") String sortBy
-    ) {
-        return ApiResponse.<PageResponse<CategoryResponse>>builder()
-                .result(categoryService.getAll(page, size, sortBy))
-                .build();
+            @RequestParam(defaultValue = "name") String sortBy) {
+        return ApiResponse.success(categoryService.getAll(page, size, sortBy)).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<CategoryResponse> getById(@PathVariable Long id) {
-        return ApiResponse.<CategoryResponse>builder()
-                .result(categoryService.getById(id))
-                .build();
+        return ApiResponse.success(categoryService.getById(id)).build();
     }
 
     // --- UPDATE API ---
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')") // Chỉ Admin được sửa
-    public ApiResponse<CategoryResponse> updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryRequestDTO request) {
-        return ApiResponse.<CategoryResponse>builder()
-                .result(categoryService.updateCategory(id, request))
-                .build();
+    public ApiResponse<CategoryResponse> updateCategory(@PathVariable Long id,
+            @RequestBody @Valid CategoryRequestDTO request) {
+        return ApiResponse.success(categoryService.updateCategory(id, request)).build();
     }
 
     // --- DELETE API ---
@@ -55,8 +47,6 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')") // Chỉ Admin được xóa
     public ApiResponse<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
-        return ApiResponse.<String>builder()
-                .result("Xóa danh mục thành công")
-                .build();
+        return ApiResponse.success("Xóa danh mục thành công").build();
     }
 }

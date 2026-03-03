@@ -1,6 +1,5 @@
 package com.wims.backend.mapper;
 
-import com.wims.backend.dto.request.CartItemRequest;
 import com.wims.backend.dto.response.CartItemResponse;
 import com.wims.backend.entity.CartItem;
 import org.mapstruct.Mapper;

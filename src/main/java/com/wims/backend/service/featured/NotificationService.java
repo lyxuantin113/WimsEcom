@@ -1,4 +1,4 @@
-package com.wims.backend.service.feature;
+package com.wims.backend.service.featured;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
