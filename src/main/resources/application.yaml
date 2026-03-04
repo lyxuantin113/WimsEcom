@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: wims-backend
+  threads:
+    virtual:
+      enabled: true
 
   # Cấu hình Database cho PostgreSQL
   datasource:
@@ -73,5 +76,18 @@ vnpay:
 
 jwt:
   secretkey: ${JWT_SECRET_KEY:ChuoiBiMatNgaoNhienSieuDai123456}
-  expiration: "150000"
+  expiration: "60000"
   refresh-expiration: "604800000"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true

@@ -11,7 +11,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "orders") // BẮT BUỘC: Tránh trùng từ khóa Order của SQL
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_order_customer_name", columnList = "customerName"),
+        @Index(name = "idx_order_status", columnList = "status"),
+        @Index(name = "idx_order_user_id", columnList = "user_id"),
+        @Index(name = "idx_order_created_at", columnList = "createdAt")
+}) // BẮT BUỘC: Tránh trùng từ khóa Order của SQL
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,9 +40,9 @@ public class Order {
     private User user;
 
     // CUSTOMER INFO
-    private String customerName;  // Tên người nhận (có thể khác tên user)
-    private String phone;         // SĐT người nhận
-    private String address;       // Địa chỉ giao hàng
+    private String customerName; // Tên người nhận (có thể khác tên user)
+    private String phone; // SĐT người nhận
+    private String address; // Địa chỉ giao hàng
 
     private BigDecimal totalAmount; // Tổng tiền hóa đơn
 

@@ -9,7 +9,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity // 1. Báo cho Spring biết: Class này đại diện cho 1 bảng trong DB
-@Table(name = "products") // 2. Tên bảng trong DB sẽ là "products"
+@Table(name = "products", indexes = {
+        @Index(name = "idx_product_name", columnList = "name"),
+        @Index(name = "idx_product_category_id", columnList = "category_id")
+}) // 2. Tên bảng trong DB sẽ là "products"
 @Data // 3. Lombok tự sinh Getter, Setter, toString, hashCode... (Khỏi phải viết tay)
 // 1. Khi gọi hàm delete(), thay vì DELETE thật, hãy chạy câu lệnh UPDATE này
 @SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ? AND version = ?")
