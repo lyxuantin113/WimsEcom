@@ -76,7 +76,7 @@ vnpay:
 
 jwt:
   secretkey: ${JWT_SECRET_KEY:ChuoiBiMatNgaoNhienSieuDai123456}
-  expiration: "60000"
+  expiration: "150000"
   refresh-expiration: "604800000"
 
 management:

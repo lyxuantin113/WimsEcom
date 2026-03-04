@@ -1,29 +1,33 @@
-# Dùng ảnh chứa Maven và JDK 21 để build code
-FROM maven:3.9.6-amazoncorretto-21-al2023 AS build
+# # Dùng ảnh chứa Maven và JDK 21 để build code
+# FROM maven:3.9.6-amazoncorretto-21-al2023 AS build
 
-# Tạo thư mục làm việc trong container
-WORKDIR /app
+# # Tạo thư mục làm việc trong container
+# WORKDIR /app
 
-# Copy file pom.xml
-COPY pom.xml .
+# # Copy file pom.xml
+# COPY pom.xml .
 
-# Tải trước các dependency (go-offline) giúp build nhanh hơn
-RUN mvn dependency:go-offline
+# # Tải trước các dependency (go-offline) giúp build nhanh hơn
+# RUN mvn dependency:go-offline
 
-# Copy toàn bộ source code
-COPY src ./src
+# # Copy toàn bộ source code
+# COPY src ./src
 
-# Build ra file .jar (Skip test để build cho nhanh)
-RUN mvn clean package -DskipTests
+# # Build ra file .jar (Skip test để build cho nhanh)
+# RUN mvn clean package -DskipTests
 
 # Dùng ảnh chỉ chứa JRE (Java Runtime) hoặc JDK Corretto 21
-FROM amazoncorretto:21-alpine-jdk
+FROM amazoncorretto:21
 
 # Tạo thư mục làm việc
 WORKDIR /app
 
 # Copy file .jar TỪ giai đoạn build sang giai đoạn run
-COPY --from=build /app/target/*.jar app.jar
+# COPY --from=build /app/target/*.jar app.jar
+
+# Copy file .jar được build bởi Cloud Build (mvn clean package)
+# Cloud Build sẽ để file jar ở thư mục target/ ngay trong workspace
+COPY target/*.jar app.jar
 
 # Mở cổng 8080 (Cổng mặc định của Spring Boot)
 EXPOSE 8080

@@ -1,4 +1,7 @@
-target/
+#.dockerignore
+# target/ 
+# (Bỏ comment dòng trên nếu muốn ignore target khi build local, 
+# nhưng cần mở ra để Cloud Build có thể copy file JAR vào Docker)
 .git/
 .idea/
 *.iml

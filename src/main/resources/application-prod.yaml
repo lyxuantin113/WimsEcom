@@ -1,0 +1,31 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  cloud:
+    gcp:
+      project-id: ${GCP_PROJECT_ID}
+      sql:
+        database-name: ${SPRING_DATASOURCE_DB_NAME}
+        instance-connection-name: ${CLOUD_SQL_CONNECTION_NAME}
+      pubsub:
+        enabled: true
+
+  datasource:
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: 6379
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+      ssl:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"

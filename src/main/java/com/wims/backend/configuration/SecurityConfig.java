@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                         // 1. Cho lấy danh sách để hiển thị nhưng search chỉ lưu lịch sử của người đã
