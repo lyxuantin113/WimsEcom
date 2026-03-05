@@ -73,10 +73,10 @@ public class AuthController {
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Đổi thành true nếu chạy HTTPS
+        cookie.setSecure(true); // Bắt buộc là true để SameSite=None hoạt động trên HTTPS
         cookie.setPath("/");
         cookie.setMaxAge((int) (refreshTokenExpiration / 1000));
-        cookie.setAttribute("SameSite", "Strict");
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
     }
 

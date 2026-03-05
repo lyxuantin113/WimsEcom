@@ -16,6 +16,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse<?>> handlingAppException(AppException exception) {
         ApiResponse<?> apiResponse = ApiResponse.error(exception.getErrorCode(), exception.getMessage()).build();
+        
+        // Nếu là lỗi liên quan đến Auth (Token hết hạn, User không tồn tại...) -> Trả về 401
+        int errorCode = exception.getErrorCode();
+        if (errorCode == 1005 || errorCode == 1006 || errorCode == 986) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponse);
+        }
+
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
