@@ -38,7 +38,7 @@ substitutions:
   _CLOUD_SQL_CONNECTION_NAME: 'wims-backend-xuantin:asia-southeast1:wims-db'
   _DB_NAME: 'postgres'
   _DB_USER: 'postgres'
-  _REDIS_HOST: '10.161.50.182'
+  _REDIS_HOST: 'curious-emu-23935.upstash.io'
   _FE_URL: 'https://wims-ecom-fe.vercel.app/'
   _CLOUDINARY_NAME: 'dfdyfg6bd'
   _CLOUDINARY_KEY: '374153475555556'

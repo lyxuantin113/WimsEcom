@@ -46,7 +46,6 @@ public class OrderController {
                 return ApiResponse.success(orderService.updateOrderStatus(id, status)).build();
         }
 
-        // GET: http://localhost:8080/api/orders/{id}
         @GetMapping("/{id}")
         public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
                 return ApiResponse.success(orderService.getOrderById(id)).build();
