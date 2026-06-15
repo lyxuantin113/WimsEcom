@@ -7,9 +7,6 @@ services:
     restart: always
     ports:
       - "80:8080" # Mở cổng 80 (Cổng Web mặc định) trỏ vào 8080 của App
-    depends_on:
-      - postgresdb
-      - redis
     environment:
       - TZ=Asia/Ho_Chi_Minh
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:jdbc:postgresql://postgresdb:5432/wims_db}
@@ -19,6 +16,7 @@ services:
       - SPRING_DATA_REDIS_PORT=${SPRING_DATA_REDIS_PORT}
       - SPRING_DATA_REDIS_PASSWORD=${SPRING_DATA_REDIS_PASSWORD}
       - SPRING_DATA_REDIS_REPOSITORIES_ENABLED=false
+      - SPRING_DATA_REDIS_SSL_ENABLED=true
       - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
       - VNP_HASH_SECRET=${VNP_HASH_SECRET}
       - CLOUDINARY_SECRET=${CLOUDINARY_SECRET}
@@ -28,30 +26,6 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - FE_BASE_URL=${FE_URL}
       # Nếu có cấu hình Cloudinary/Mail
-    networks:
-      - wims-network
-
-  # 2. DATABASE (Giống hệt Dev, chỉ thêm restart policy)
-  postgresdb:
-    image: postgres:15-alpine
-    container_name: wims-postgres-prod
-    restart: always
-    environment:
-      TZ: Asia/Ho_Chi_Minh
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: wims_db
-    volumes:
-      # Mount ra thư mục thật trên Server để không mất dữ liệu
-      - ./postgres_data_prod:/var/lib/postgresql/data
-    networks:
-      - wims-network
-
-  # 3. REDIS (Giống hệt Dev)
-  redis:
-    image: redis:alpine
-    container_name: wims-redis-prod
-    restart: always
     networks:
       - wims-network
 
