@@ -6,9 +6,6 @@ spring:
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID}
-      sql:
-        database-name: ${SPRING_DATASOURCE_DB_NAME}
-        instance-connection-name: ${CLOUD_SQL_CONNECTION_NAME}
       pubsub:
         enabled: true
 
