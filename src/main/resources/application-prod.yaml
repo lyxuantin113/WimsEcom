@@ -3,11 +3,6 @@ spring:
     activate:
       on-profile: prod
 
-  cloud:
-    gcp:
-      project-id: ${GCP_PROJECT_ID}
-      pubsub:
-        enabled: true
 
   datasource:
     username: ${SPRING_DATASOURCE_USERNAME}
