@@ -120,4 +120,9 @@ public class VNPayPaymentStrategy implements PaymentStrategy {
     public String getMethodName() {
         return "VNPAY";
     }
+
+    @Override
+    public OrderStatus getInitialOrderStatus() {
+        return OrderStatus.PENDING_PAYMENT;
+    }
 }

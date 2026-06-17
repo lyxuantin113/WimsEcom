@@ -7,9 +7,12 @@ import com.wims.backend.dto.response.DiscountCalculationResponse;
 import com.wims.backend.dto.response.OrderResponse;
 import com.wims.backend.entity.*;
 import com.wims.backend.event.OrderCreatedEvent;
+import com.wims.backend.enums.OrderStatus;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
+import com.wims.backend.service.payment.PaymentFactory;
+import com.wims.backend.service.payment.PaymentStrategy;
 import com.wims.backend.utils.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +42,12 @@ class OrderServiceTest {
     @Mock
     private CartItemRepository cartItemRepository;
     @Mock
+    private PaymentFactory paymentFactory;
+    @Mock
+    private PaymentStrategy paymentStrategy;
+    @Mock
+    private InventoryService inventoryService;
+    @Mock
     private OrderMapper orderMapper;
     @Mock
     private DiscountRepository discountRepository;
@@ -61,8 +70,8 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderService(
-                orderRepository, productRepository, cartRepository, cartItemRepository,
-                orderMapper, discountRepository, discountService, eventPublisher, securityUtils);
+                orderRepository, productRepository, cartRepository, paymentFactory, cartItemRepository,
+                inventoryService, orderMapper, discountRepository, discountService, eventPublisher, securityUtils);
 
         mockUser = new User();
         mockUser.setId(1L);
@@ -100,6 +109,9 @@ class OrderServiceTest {
         when(securityUtils.getCurrentUserLogin()).thenReturn(mockUser);
         when(productRepository.findAllByIdWithLock(anyList())).thenReturn(List.of(mockProduct));
 
+        when(paymentFactory.getStrategy(anyString())).thenReturn(paymentStrategy);
+        when(paymentStrategy.getInitialOrderStatus()).thenReturn(OrderStatus.PENDING_CONFIRMATION);
+
         when(orderRepository.save(any(Order.class))).thenReturn(mockOrderSaved);
 
         OrderResponse responseMock = OrderResponse.builder()
@@ -122,7 +134,7 @@ class OrderServiceTest {
         assertEquals(BigDecimal.valueOf(4000), result.totalAmount());
 
         // Kiểm tra trừ kho
-        assertEquals(8, mockProduct.getStockQuantity());
+        verify(inventoryService, times(1)).exportStock(eq(100L), eq(2), eq(999L), anyString());
 
         // Kiểm tra xóa giỏ hàng
         verify(cartItemRepository, times(1)).deleteAllByCartId(888L);
@@ -138,6 +150,9 @@ class OrderServiceTest {
         mockProduct.setStockQuantity(1); // Chỉ còn 1, nhưng yêu cầu mua 2
         when(securityUtils.getCurrentUserLogin()).thenReturn(mockUser);
         when(productRepository.findAllByIdWithLock(anyList())).thenReturn(List.of(mockProduct));
+
+        when(paymentFactory.getStrategy(anyString())).thenReturn(paymentStrategy);
+        when(paymentStrategy.getInitialOrderStatus()).thenReturn(OrderStatus.PENDING_CONFIRMATION);
 
         // Act & Assert
         AppException exception = assertThrows(AppException.class, () -> {
@@ -166,6 +181,9 @@ class OrderServiceTest {
         when(securityUtils.getCurrentUserLogin()).thenReturn(mockUser);
         when(productRepository.findAllByIdWithLock(anyList())).thenReturn(List.of(mockProduct));
         when(discountRepository.findByCodeWithLock("TET2026")).thenReturn(Optional.of(mockDiscount));
+
+        when(paymentFactory.getStrategy(anyString())).thenReturn(paymentStrategy);
+        when(paymentStrategy.getInitialOrderStatus()).thenReturn(OrderStatus.PENDING_CONFIRMATION);
 
         // Giả lập discount service trả về kết quả giảm 500
         DiscountCalculationResponse calcResponse = DiscountCalculationResponse.builder()

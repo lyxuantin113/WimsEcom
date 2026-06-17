@@ -38,4 +38,6 @@ public interface ProductRepository extends
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :quantity WHERE p.id = :id")
     void incrementStock(@Param("id") Long id, @Param("quantity") int quantity);
+
+    List<Product> findByStockQuantityLessThan(Integer threshold);
 }

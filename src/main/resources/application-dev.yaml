@@ -66,8 +66,8 @@ cloudinary:
 vnpay:
   payurl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
   returnurl: http://localhost:5173/payment-result
-  tmncode: EP00AIH4
-  hashsecret: TIKM7PQZ7600Y1LRDG383QB13SVX13M8
+  tmncode: 7G0A4L1X
+  hashsecret: XSAJJDT5EUUYHKDK5P5FJ0WMSWOVP5YJ
   apiurl: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
 jwt:

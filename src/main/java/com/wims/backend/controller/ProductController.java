@@ -86,7 +86,6 @@ public class ProductController {
         return ApiResponse.success(productService.getProductById(id)).build();
     }
 
-    // API: Tạo mới (POST)
     // consumes: Báo hiệu API này nhận Form Data (bao gồm file)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

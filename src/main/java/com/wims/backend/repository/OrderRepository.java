@@ -22,6 +22,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'COMPLETED' AND YEAR(o.createdAt) = :year")
     BigDecimal sumTotalRevenue(@Param("year") int year);
 
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'COMPLETED' AND o.createdAt >= :startOfDay AND o.createdAt <= :endOfDay")
+    BigDecimal getDailyRevenue(@Param("startOfDay") java.time.LocalDateTime startOfDay, @Param("endOfDay") java.time.LocalDateTime endOfDay);
+
     // 2. Đếm số đơn hàng theo trạng thái
     long countByStatus(OrderStatus status);
 

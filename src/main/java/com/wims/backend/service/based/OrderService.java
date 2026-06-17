@@ -13,6 +13,7 @@ import com.wims.backend.event.OrderStatusChangedEvent;
 import com.wims.backend.exception.AppException;
 import com.wims.backend.mapper.OrderMapper;
 import com.wims.backend.repository.*;
+import com.wims.backend.service.payment.PaymentFactory;
 import com.wims.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,7 +39,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
+    private final PaymentFactory paymentFactory;
     private final CartItemRepository cartItemRepository;
+    private final InventoryService inventoryService;
 
     private final OrderMapper orderMapper;
 
@@ -99,10 +102,8 @@ public class OrderService {
         // 1. Lấy User
         User user = securityUtils.getCurrentUserLogin();
 
-        // 2. Xác định trạng thái ban đầu
-        OrderStatus initialStatus = "VNPAY".equalsIgnoreCase(request.paymentMethod())
-                ? OrderStatus.PENDING_PAYMENT
-                : OrderStatus.PENDING_CONFIRMATION;
+        // 2. Xác định trạng thái ban đầu dựa vào Payment Strategy
+        OrderStatus initialStatus = paymentFactory.getStrategy(request.paymentMethod()).getInitialOrderStatus();
 
         Order order = Order.builder()
                 .user(user)
@@ -160,12 +161,11 @@ public class OrderService {
         for (CartItemRequest item : request.items()) {
             Product product = productMap.get(item.productId());
 
-            // Check & Trừ kho
+            // Check hàng trước để throw lỗi nếu hết hàng (InventoryService cũng sẽ check
+            // lại)
             if (product.getStockQuantity() < item.quantity()) {
                 throw new AppException(1005, "Sản phẩm " + product.getName() + " hết hàng");
             }
-
-            product.setStockQuantity(product.getStockQuantity() - item.quantity());
 
             // Tạo Detail
             OrderDetail detail = OrderDetail.builder()
@@ -181,9 +181,6 @@ public class OrderService {
             rawTotal = rawTotal.add(product.getPrice().multiply(BigDecimal.valueOf(item.quantity())));
         }
 
-        // Dirty Checking
-        // productRepository.saveAll(products);
-
         // Gán list detail vào order
         order.setOrderDetails(details);
 
@@ -198,6 +195,12 @@ public class OrderService {
 
         // 7. LƯU ORDER (Chỉ gọi save 1 lần duy nhất ở đây)
         Order savedOrder = orderRepository.save(order);
+
+        // 7.1. Trừ kho thông qua InventoryService (Có ghi log Transaction)
+        for (CartItemRequest itemReq : request.items()) {
+            inventoryService.exportStock(itemReq.productId(), itemReq.quantity(), savedOrder.getId(),
+                    "Bán hàng qua Order");
+        }
 
         // 8. Xóa giỏ hàng
         Cart cart = cartRepository.findByUserId(user.getId());
@@ -316,7 +319,8 @@ public class OrderService {
 
         if (isCancelOrReturn && !isAlreadyRestocked) {
             for (OrderDetail detail : order.getOrderDetails()) {
-                productRepository.incrementStock(detail.getProduct().getId(), detail.getQuantity());
+                inventoryService.returnStock(detail.getProduct().getId(), detail.getQuantity(), order.getId(),
+                        "Hoàn trả từ Order bị " + newStatus);
             }
         }
     }

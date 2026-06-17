@@ -2,6 +2,7 @@ package com.wims.backend.service.payment;
 
 import com.wims.backend.dto.ApiResponse;
 import com.wims.backend.entity.Order;
+import com.wims.backend.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,5 +25,10 @@ public class CODPaymentStrategy implements PaymentStrategy {
     @Override
     public String getMethodName() {
         return "COD";
+    }
+
+    @Override
+    public OrderStatus getInitialOrderStatus() {
+        return OrderStatus.PENDING_CONFIRMATION;
     }
 }
